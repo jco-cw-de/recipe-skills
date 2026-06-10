@@ -153,6 +153,7 @@ The `workato` provider is **built-in** and should **NOT** be in the recipe's `co
 | If/Else | [control-flow/if-else.md](control-flow/if-else.md) |
 | Try/Catch | [control-flow/try-catch.md](control-flow/try-catch.md) |
 | Foreach Loops | [control-flow/foreach.md](control-flow/foreach.md) |
+| Repeat While Loops | [control-flow/repeat-while.md](control-flow/repeat-while.md) |
 | Stop Action | [control-flow/stop.md](control-flow/stop.md) |
 | API Endpoint Trigger | [triggers/api-endpoint.md](triggers/api-endpoint.md) |
 | Callable Recipe Trigger | [triggers/callable-recipe.md](triggers/callable-recipe.md) |
@@ -770,11 +771,11 @@ Every block in a recipe requires these fields:
 | Field | Required | Description |
 |-------|----------|-------------|
 | `number` | Yes | Sequential step number |
-| `keyword` | Yes | Block type: `trigger`, `action`, `if`, `else`, `try`, `catch`, `foreach`, `stop` |
+| `keyword` | Yes | Block type: `trigger`, `action`, `if`, `else`, `try`, `catch`, `foreach`, `stop`, `repeat`, `while_condition` |
 | `uuid` | Yes | Unique identifier (max 36 chars) |
 | `as` | Yes* | Step alias for datapill references |
 
-*Required for actions, triggers, catch, and foreach. Optional for `try`, `if`, and `else` blocks.
+*Required for actions, triggers, catch, foreach, and `repeat`. Optional for `try`, `if`, and `else` blocks. NOT used on `while_condition`.
 
 ### Provider Field Rules
 
@@ -783,6 +784,8 @@ Every block in a recipe requires these fields:
 | Trigger | Required (e.g., `workato_api_platform`) |
 | Action | Required (e.g., `stripe`, `salesforce`) |
 | If/Else | NO provider field |
+| Foreach | NO provider field |
+| Repeat / While Condition | NO provider field |
 | Catch | `"provider": null` (explicitly null) |
 
 ### UUID Guidelines
@@ -1241,5 +1244,5 @@ See [validation-checklist.md](validation-checklist.md) for the consolidated reci
 
 - **Fundamentals:** See `fundamentals/` directory for recipe structure, config, and datapill syntax
 - **Triggers:** See `triggers/` directory for detailed trigger documentation
-- **Control Flow:** See `control-flow/` directory for if/else, try/catch, foreach, and stop patterns
+- **Control Flow:** See `control-flow/` directory for if/else, try/catch, foreach, stop, and repeat-while patterns
 - **Templates:** See `templates/` directory for starter templates
