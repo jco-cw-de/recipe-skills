@@ -1,0 +1,229 @@
+{
+    "name": "Create calendar event",
+    "description": "Creates a Google Calendar event with title, time, and attendees via API endpoint trigger",
+    "version": 1,
+    "private": false,
+    "concurrency": 1,
+    "code": {
+        "number": 0,
+        "provider": "workato_api_platform",
+        "name": "receive_request",
+        "as": "trigger",
+        "keyword": "trigger",
+        "uuid": "trigger-000",
+        "format_version": 2,
+        "input": {
+            "request": {
+                "content_type": "json",
+                "schema": "[{\"name\":\"calendar_id\",\"label\":\"Calendar ID\",\"type\":\"string\",\"control_type\":\"text\",\"optional\":true,\"hint\":\"Google Calendar ID. Defaults to primary.\"},{\"name\":\"title\",\"label\":\"Event title\",\"type\":\"string\",\"control_type\":\"text\",\"optional\":false},{\"name\":\"start_datetime\",\"label\":\"Start datetime (ISO 8601)\",\"type\":\"string\",\"control_type\":\"text\",\"optional\":false,\"hint\":\"e.g. 2026-06-18T09:00:00\"},{\"name\":\"end_datetime\",\"label\":\"End datetime (ISO 8601)\",\"type\":\"string\",\"control_type\":\"text\",\"optional\":false},{\"name\":\"timezone\",\"label\":\"Timezone\",\"type\":\"string\",\"control_type\":\"text\",\"optional\":true,\"hint\":\"IANA tz, e.g. America/Los_Angeles\"},{\"name\":\"description\",\"label\":\"Description\",\"type\":\"string\",\"control_type\":\"text\",\"optional\":true},{\"name\":\"attendee_emails\",\"label\":\"Attendee emails (comma-separated)\",\"type\":\"string\",\"control_type\":\"text\",\"optional\":true}]"
+            },
+            "response": {
+                "content_type": "json",
+                "responses": [
+                    {
+                        "name": "Created",
+                        "http_status_code": "201"
+                    },
+                    {
+                        "name": "Bad Request",
+                        "http_status_code": "400"
+                    },
+                    {
+                        "name": "Server Error",
+                        "http_status_code": "500"
+                    }
+                ]
+            }
+        },
+        "extended_output_schema": [
+            {
+                "label": "Request",
+                "name": "request",
+                "type": "object",
+                "properties": [
+                    {
+                        "name": "calendar_id",
+                        "label": "Calendar ID",
+                        "type": "string",
+                        "control_type": "text"
+                    },
+                    {
+                        "name": "title",
+                        "label": "Title",
+                        "type": "string",
+                        "control_type": "text"
+                    },
+                    {
+                        "name": "start_datetime",
+                        "label": "Start datetime",
+                        "type": "string",
+                        "control_type": "text"
+                    },
+                    {
+                        "name": "end_datetime",
+                        "label": "End datetime",
+                        "type": "string",
+                        "control_type": "text"
+                    },
+                    {
+                        "name": "timezone",
+                        "label": "Timezone",
+                        "type": "string",
+                        "control_type": "text"
+                    },
+                    {
+                        "name": "description",
+                        "label": "Description",
+                        "type": "string",
+                        "control_type": "text"
+                    },
+                    {
+                        "name": "attendee_emails",
+                        "label": "Attendee emails",
+                        "type": "string",
+                        "control_type": "text"
+                    }
+                ]
+            }
+        ],
+        "block": [
+            {
+                "number": 1,
+                "provider": "google_calendar",
+                "name": "create_event",
+                "as": "created_event",
+                "keyword": "action",
+                "uuid": "create-event-001",
+                "input": {
+                    "calendar": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_api_platform\",\"line\":\"trigger\",\"path\":[\"request\",\"calendar_id\"]}').presence || 'primary'}",
+                    "name": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_api_platform\",\"line\":\"trigger\",\"path\":[\"request\",\"title\"]}')}",
+                    "start_date_time": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_api_platform\",\"line\":\"trigger\",\"path\":[\"request\",\"start_datetime\"]}')}",
+                    "end_date_time": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_api_platform\",\"line\":\"trigger\",\"path\":[\"request\",\"end_datetime\"]}')}",
+                    "displayed_time_zone": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_api_platform\",\"line\":\"trigger\",\"path\":[\"request\",\"timezone\"]}').presence || 'UTC'}",
+                    "event_description": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_api_platform\",\"line\":\"trigger\",\"path\":[\"request\",\"description\"]}')}",
+                    "attendee_emails": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_api_platform\",\"line\":\"trigger\",\"path\":[\"request\",\"attendee_emails\"]}')}",
+                    "send_updates": "all"
+                }
+            },
+            {
+                "number": 2,
+                "provider": "workato_api_platform",
+                "name": "return_response",
+                "as": "return_created",
+                "keyword": "action",
+                "uuid": "return-created-002",
+                "input": {
+                    "http_status_code": "201",
+                    "response": {
+                        "event_id": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"google_calendar\",\"line\":\"created_event\",\"path\":[\"id\"]}')}",
+                        "event_url": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"google_calendar\",\"line\":\"created_event\",\"path\":[\"url\"]}')}"
+                    }
+                },
+                "extended_input_schema": [
+                    {
+                        "change_on_blur": true,
+                        "control_type": "select",
+                        "extends_schema": true,
+                        "label": "Response",
+                        "name": "http_status_code",
+                        "pick_list": [
+                            [
+                                "Created",
+                                "201"
+                            ],
+                            [
+                                "Bad Request",
+                                "400"
+                            ],
+                            [
+                                "Server Error",
+                                "500"
+                            ]
+                        ],
+                        "type": "string"
+                    },
+                    {
+                        "label": "Response body",
+                        "name": "response",
+                        "type": "object",
+                        "properties": [
+                            {
+                                "name": "event_id",
+                                "label": "Event ID",
+                                "type": "string",
+                                "control_type": "text"
+                            },
+                            {
+                                "name": "event_url",
+                                "label": "Event URL",
+                                "type": "string",
+                                "control_type": "text"
+                            }
+                        ]
+                    }
+                ],
+                "extended_output_schema": [
+                    {
+                        "change_on_blur": true,
+                        "control_type": "select",
+                        "extends_schema": true,
+                        "label": "Response",
+                        "name": "http_status_code",
+                        "pick_list": [
+                            [
+                                "Created",
+                                "201"
+                            ],
+                            [
+                                "Bad Request",
+                                "400"
+                            ],
+                            [
+                                "Server Error",
+                                "500"
+                            ]
+                        ],
+                        "type": "string"
+                    },
+                    {
+                        "label": "Response body",
+                        "name": "response",
+                        "type": "object",
+                        "properties": [
+                            {
+                                "name": "event_id",
+                                "label": "Event ID",
+                                "type": "string",
+                                "control_type": "text"
+                            },
+                            {
+                                "name": "event_url",
+                                "label": "Event URL",
+                                "type": "string",
+                                "control_type": "text"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    "config": [
+        {
+            "keyword": "application",
+            "provider": "workato_api_platform",
+            "skip_validation": false,
+            "account_id": null
+        },
+        {
+            "keyword": "application",
+            "provider": "google_calendar",
+            "skip_validation": false,
+            "account_id": {
+                "zip_name": "my_google_calendar.connection.json",
+                "name": "My Google Calendar",
+                "folder": ""
+            }
+        }
+    ]
+}

@@ -1,0 +1,50 @@
+{
+    "version": "0.1.0",
+    "connector": "google_calendar",
+    "connector_internals": [],
+    "valid_action_names": [
+        "__adhoc_http_action",
+        "add_attendees_to_event",
+        "create_all_day_event",
+        "create_event",
+        "delete_attendees_from_event",
+        "delete_event",
+        "get_event_by_id",
+        "search_events",
+        "update_event"
+    ],
+    "valid_trigger_names": [
+        "new_event",
+        "new_updated_event",
+        "event_start",
+        "event_end"
+    ],
+    "action_rules": [],
+    "_notes": {
+        "verification_status": "action and trigger names verified against Workato docs 2026-06-17",
+        "verified_actions": [
+            "create_event",
+            "create_all_day_event",
+            "update_event",
+            "delete_event",
+            "get_event_by_id",
+            "search_events",
+            "add_attendees_to_event",
+            "delete_attendees_from_event"
+        ],
+        "verified_triggers": [
+            "new_event",
+            "new_updated_event",
+            "event_start",
+            "event_end"
+        ],
+        "unverified_actions": [],
+        "adhoc_http_verified_endpoints": [
+            "POST calendar/v3/freeBusy — get busy slots for one or more calendars",
+            "GET calendar/v3/calendars/{calendarId} — get calendar metadata",
+            "GET calendar/v3/users/me/calendarList — list all calendars for the user",
+            "POST calendar/v3/calendars/{calendarId}/events/quickAdd — quick add event from text"
+        ],
+        "naming_convention": "verb_noun pattern: create_event, update_event, delete_event, get_event_by_id, search_events"
+    }
+}

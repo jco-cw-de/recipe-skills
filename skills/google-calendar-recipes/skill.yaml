@@ -1,0 +1,62 @@
+# Google Calendar Recipes Skill for Workato
+# A knowledge bundle that teaches AI agents how to write production-grade
+# Google Calendar integration recipes in Workato's recipe JSON format.
+
+name: google-calendar-recipes
+version: 1.0.0
+description: >
+  Google Calendar integration recipes for Workato. This skill enables AI agents
+  to generate valid Workato recipe JSON for Google Calendar operations including
+  creating and managing events, searching calendars, checking availability,
+  and reacting to calendar changes via triggers.
+
+author: Workato
+license: MIT
+
+# Base skill dependency
+extends: workato-recipes
+
+# Capabilities this skill provides
+capabilities:
+  - Create timed and all-day events with full attendee and recurrence support
+  - Update existing events (title, time, attendees, description, location)
+  - Delete events from a calendar
+  - Get event details by ID
+  - Search events by date range and search terms (batch output)
+  - Add and remove attendees from events (batch)
+  - Trigger on new events or new/updated events in a calendar
+  - Trigger at event start or event end time
+  - Check free/busy availability via adhoc HTTP (freeBusy endpoint)
+  - List calendars and get calendar metadata via adhoc HTTP
+
+# Entry point for agent consumption
+entry_point: SKILL.md
+
+# Pattern documentation
+patterns:
+  - patterns/google-calendar-api-reference.md
+
+# Validation checklist
+validation:
+  - validation-checklist.md
+
+# Templates
+templates:
+  - templates/create-event.json
+  - templates/get-freebusy.json
+
+# Target platforms
+platforms:
+  - workato
+  - google_calendar
+
+# Tags for discovery
+tags:
+  - google-calendar
+  - calendar
+  - events
+  - scheduling
+  - google
+  - workato
+  - integration
+  - recipes

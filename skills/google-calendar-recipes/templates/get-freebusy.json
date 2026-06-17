@@ -1,0 +1,316 @@
+{
+    "name": "Get free busy slots",
+    "description": "Fetches free/busy information for a Google Calendar on a given date. Returns the raw freeBusy JSON body as a string for the caller to parse. Uses response_type: raw to handle the dynamic calendars object keyed by calendar ID.",
+    "version": 1,
+    "private": false,
+    "concurrency": 1,
+    "code": {
+        "number": 0,
+        "provider": "workato_api_platform",
+        "name": "receive_request",
+        "as": "trigger",
+        "keyword": "trigger",
+        "uuid": "trigger-000",
+        "format_version": 2,
+        "input": {
+            "request": {
+                "content_type": "json",
+                "schema": "[{\"name\":\"target_date\",\"label\":\"Target date (YYYY-MM-DD)\",\"type\":\"string\",\"control_type\":\"text\",\"optional\":false,\"hint\":\"Date to check availability for\"},{\"name\":\"calendar_id\",\"label\":\"Calendar ID\",\"type\":\"string\",\"control_type\":\"text\",\"optional\":true,\"hint\":\"Defaults to primary\"},{\"name\":\"timezone\",\"label\":\"Timezone\",\"type\":\"string\",\"control_type\":\"text\",\"optional\":true,\"hint\":\"IANA tz, e.g. America/Los_Angeles. Defaults to UTC\"}]"
+            },
+            "response": {
+                "content_type": "json",
+                "responses": [
+                    {
+                        "name": "Success",
+                        "http_status_code": "200"
+                    },
+                    {
+                        "name": "Bad Request",
+                        "http_status_code": "400"
+                    },
+                    {
+                        "name": "Server Error",
+                        "http_status_code": "500"
+                    }
+                ]
+            }
+        },
+        "extended_output_schema": [
+            {
+                "label": "Request",
+                "name": "request",
+                "type": "object",
+                "properties": [
+                    {
+                        "name": "target_date",
+                        "label": "Target date",
+                        "type": "string",
+                        "control_type": "text"
+                    },
+                    {
+                        "name": "calendar_id",
+                        "label": "Calendar ID",
+                        "type": "string",
+                        "control_type": "text"
+                    },
+                    {
+                        "name": "timezone",
+                        "label": "Timezone",
+                        "type": "string",
+                        "control_type": "text"
+                    }
+                ]
+            }
+        ],
+        "block": [
+            {
+                "number": 1,
+                "provider": "google_calendar",
+                "name": "__adhoc_http_action",
+                "as": "fetch_freebusy",
+                "keyword": "action",
+                "uuid": "fetch-freebusy-001",
+                "input": {
+                    "mnemonic": "Get free/busy",
+                    "verb": "post",
+                    "request_type": "json",
+                    "response_type": "raw",
+                    "path": "calendar/v3/freeBusy",
+                    "input": {
+                        "schema": "[{\"name\":\"timeMin\",\"type\":\"string\",\"label\":\"Time Min\",\"optional\":false},{\"name\":\"timeMax\",\"type\":\"string\",\"label\":\"Time Max\",\"optional\":false},{\"name\":\"timeZone\",\"type\":\"string\",\"label\":\"Timezone\",\"optional\":true},{\"name\":\"items\",\"type\":\"array\",\"label\":\"Items\",\"optional\":false,\"of\":\"object\"}]",
+                        "data": {
+                            "timeMin": "=_dp('{\"pill_type\":\"output\",\"provider\":\"workato_api_platform\",\"line\":\"trigger\",\"path\":[\"request\",\"target_date\"]}') + 'T00:00:00Z'",
+                            "timeMax": "=_dp('{\"pill_type\":\"output\",\"provider\":\"workato_api_platform\",\"line\":\"trigger\",\"path\":[\"request\",\"target_date\"]}') + 'T23:59:59Z'",
+                            "timeZone": "=_dp('{\"pill_type\":\"output\",\"provider\":\"workato_api_platform\",\"line\":\"trigger\",\"path\":[\"request\",\"timezone\"]}').presence || 'UTC'",
+                            "items": "=[{\"id\": _dp('{\"pill_type\":\"output\",\"provider\":\"workato_api_platform\",\"line\":\"trigger\",\"path\":[\"request\",\"calendar_id\"]}').presence || 'primary'}].to_json"
+                        }
+                    },
+                    "output": "[{\"name\":\"body\",\"type\":\"string\",\"label\":\"Response body\"}]"
+                },
+                "extended_output_schema": [
+                    {
+                        "name": "body",
+                        "type": "string",
+                        "label": "Response body",
+                        "control_type": "text",
+                        "optional": true
+                    }
+                ],
+                "extended_input_schema": [
+                    {
+                        "name": "mnemonic",
+                        "label": "Mnemonic",
+                        "type": "string",
+                        "control_type": "text"
+                    },
+                    {
+                        "name": "verb",
+                        "label": "HTTP verb",
+                        "type": "string",
+                        "control_type": "text"
+                    },
+                    {
+                        "name": "request_type",
+                        "label": "Request type",
+                        "type": "string",
+                        "control_type": "text"
+                    },
+                    {
+                        "name": "response_type",
+                        "label": "Response type",
+                        "type": "string",
+                        "control_type": "text"
+                    },
+                    {
+                        "name": "path",
+                        "label": "Path",
+                        "type": "string",
+                        "control_type": "text"
+                    },
+                    {
+                        "name": "input",
+                        "label": "Request body",
+                        "type": "object",
+                        "properties": [
+                            {
+                                "name": "schema",
+                                "label": "Schema",
+                                "type": "string",
+                                "control_type": "text"
+                            },
+                            {
+                                "name": "data",
+                                "label": "Data",
+                                "type": "object",
+                                "properties": [
+                                    {
+                                        "name": "timeMin",
+                                        "label": "Time Min",
+                                        "type": "string",
+                                        "control_type": "text"
+                                    },
+                                    {
+                                        "name": "timeMax",
+                                        "label": "Time Max",
+                                        "type": "string",
+                                        "control_type": "text"
+                                    },
+                                    {
+                                        "name": "timeZone",
+                                        "label": "Timezone",
+                                        "type": "string",
+                                        "control_type": "text"
+                                    },
+                                    {
+                                        "name": "items",
+                                        "label": "Items",
+                                        "type": "string",
+                                        "control_type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "name": "output",
+                        "label": "Output schema",
+                        "type": "string",
+                        "control_type": "text"
+                    }
+                ]
+            },
+            {
+                "number": 2,
+                "provider": "workato_api_platform",
+                "name": "return_response",
+                "as": "return_success",
+                "keyword": "action",
+                "uuid": "return-success-002",
+                "input": {
+                    "http_status_code": "200",
+                    "response": {
+                        "freebusy_json": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"google_calendar\",\"line\":\"fetch_freebusy\",\"path\":[\"body\"]}')}",
+                        "target_date": "#{_dp('{\"pill_type\":\"output\",\"provider\":\"workato_api_platform\",\"line\":\"trigger\",\"path\":[\"request\",\"target_date\"]}')}",
+                        "calendar_id": "=_dp('{\"pill_type\":\"output\",\"provider\":\"workato_api_platform\",\"line\":\"trigger\",\"path\":[\"request\",\"calendar_id\"]}').presence || 'primary'"
+                    }
+                },
+                "extended_input_schema": [
+                    {
+                        "change_on_blur": true,
+                        "control_type": "select",
+                        "extends_schema": true,
+                        "label": "Response",
+                        "name": "http_status_code",
+                        "pick_list": [
+                            [
+                                "Success",
+                                "200"
+                            ],
+                            [
+                                "Bad Request",
+                                "400"
+                            ],
+                            [
+                                "Server Error",
+                                "500"
+                            ]
+                        ],
+                        "type": "string"
+                    },
+                    {
+                        "label": "Response body",
+                        "name": "response",
+                        "type": "object",
+                        "properties": [
+                            {
+                                "name": "freebusy_json",
+                                "label": "FreeBusy JSON",
+                                "type": "string",
+                                "control_type": "text"
+                            },
+                            {
+                                "name": "target_date",
+                                "label": "Target date",
+                                "type": "string",
+                                "control_type": "text"
+                            },
+                            {
+                                "name": "calendar_id",
+                                "label": "Calendar ID",
+                                "type": "string",
+                                "control_type": "text"
+                            }
+                        ]
+                    }
+                ],
+                "extended_output_schema": [
+                    {
+                        "change_on_blur": true,
+                        "control_type": "select",
+                        "extends_schema": true,
+                        "label": "Response",
+                        "name": "http_status_code",
+                        "pick_list": [
+                            [
+                                "Success",
+                                "200"
+                            ],
+                            [
+                                "Bad Request",
+                                "400"
+                            ],
+                            [
+                                "Server Error",
+                                "500"
+                            ]
+                        ],
+                        "type": "string"
+                    },
+                    {
+                        "label": "Response body",
+                        "name": "response",
+                        "type": "object",
+                        "properties": [
+                            {
+                                "name": "freebusy_json",
+                                "label": "FreeBusy JSON",
+                                "type": "string",
+                                "control_type": "text"
+                            },
+                            {
+                                "name": "target_date",
+                                "label": "Target date",
+                                "type": "string",
+                                "control_type": "text"
+                            },
+                            {
+                                "name": "calendar_id",
+                                "label": "Calendar ID",
+                                "type": "string",
+                                "control_type": "text"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    "config": [
+        {
+            "keyword": "application",
+            "provider": "workato_api_platform",
+            "skip_validation": false,
+            "account_id": null
+        },
+        {
+            "keyword": "application",
+            "provider": "google_calendar",
+            "skip_validation": false,
+            "account_id": {
+                "zip_name": "my_google_calendar.connection.json",
+                "name": "My Google Calendar",
+                "folder": ""
+            }
+        }
+    ]
+}
