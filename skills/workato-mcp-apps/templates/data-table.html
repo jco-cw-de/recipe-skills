@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>App</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+  <body class="bg-gray-50 text-gray-900 min-h-screen p-4">
+    <!-- Loading -->
+    <div
+      id="loading"
+      class="flex flex-col items-center justify-center min-h-48 gap-3"
+    >
+      <div
+        class="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"
+      ></div>
+      <p class="text-gray-500 text-sm">Loading…</p>
+    </div>
+
+    <!-- Error -->
+    <div
+      id="error"
+      class="hidden bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm"
+    ></div>
+
+    <!-- App -->
+    <div id="app" class="hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <h1 id="title" class="text-lg font-semibold">Results</h1>
+        <input
+          id="search"
+          type="text"
+          placeholder="Filter…"
+          class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 w-48 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        />
+      </div>
+
+      <div
+        class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+      >
+        <table class="w-full text-sm">
+          <thead id="thead" class="bg-gray-50 border-b border-gray-100"></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div
+          id="empty"
+          class="hidden px-4 py-8 text-center text-gray-400 text-sm"
+        >
+          No results.
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button
+          id="btn-accept"
+          class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Accept selected
+        </button>
+        <button
+          id="btn-reject"
+          class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+        >
+          Reject selected
+        </button>
+        <span id="count" class="text-sm text-gray-400"></span>
+        <span id="confirm" class="hidden text-sm text-green-600 font-medium"
+          >✓ Submitted!</span
+        >
+      </div>
+    </div>
+
+    <script type="module">
+      // Most cases, do not modify this line.
+      import { App } from "https://cdn.jsdelivr.net/npm/@modelcontextprotocol/ext-apps@1.3.1/dist/src/app-with-deps.js";
+
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) =>
+        String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+
+      let allRows = [];
+      let columns = [];
+
+      function renderRows(rows) {
+        $("count").textContent =
+          `${rows.length} item${rows.length !== 1 ? "s" : ""}`;
+        if (rows.length === 0) {
+          $("tbody").innerHTML = "";
+          $("empty").classList.remove("hidden");
+          return;
+        }
+        $("empty").classList.add("hidden");
+        $("tbody").innerHTML = rows
+          .map(
+            (row, i) => `
+        <tr class="border-b border-gray-50 hover:bg-gray-50">
+          <td class="px-2 py-2.5 text-center">
+            <input type="checkbox" class="row-check rounded" data-i="${i}" />
+          </td>
+          ${columns
+            .map(
+              (col) =>
+                `<td class="px-3 py-2.5 text-sm text-gray-700">${esc(row[col] ?? "—")}</td>`,
+            )
+            .join("")}
+        </tr>
+      `,
+          )
+          .join("");
+      }
+
+      function render(rows, title, cols) {
+        allRows = rows;
+        columns = cols || (rows[0] ? Object.keys(rows[0]) : []);
+        if (title) $("title").textContent = title;
+
+        $("thead").innerHTML = `<tr>
+        <th class="w-8 px-2 py-2.5"></th>
+        ${columns
+          .map(
+            (col) =>
+              `<th class="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide cursor-pointer hover:text-gray-700" data-col="${esc(col)}">${esc(col)}</th>`,
+          )
+          .join("")}
+      </tr>`;
+
+        $("thead").addEventListener("click", (e) => {
+          const col = e.target.dataset.col;
+          if (!col) return;
+          allRows.sort((a, b) =>
+            String(a[col] ?? "").localeCompare(String(b[col] ?? "")),
+          );
+          renderRows(allRows);
+        });
+
+        $("search").addEventListener("input", (e) => {
+          const q = e.target.value.toLowerCase();
+          renderRows(
+            allRows.filter((row) =>
+              columns.some((col) =>
+                String(row[col] ?? "")
+                  .toLowerCase()
+                  .includes(q),
+              ),
+            ),
+          );
+        });
+
+        renderRows(allRows);
+        $("loading").classList.add("hidden");
+        $("app").classList.remove("hidden");
+      }
+
+      (async () => {
+        const app = new App({ name: "Data Table", version: "1.0.0" });
+        await app.connect();
+
+        app.ontoolresult = (result) => {
+          try {
+            const content = result?.content || result?.result?.content || [];
+            const textItem = content.find((c) => c.type === "text");
+            if (!textItem) throw new Error("No text content in tool result");
+
+            // Parse the tool result — adapt this to your tool's output shape
+            const data = JSON.parse(textItem.text);
+            const rows = data.rows || data.items || data.data || [];
+            render(rows, data.title, data.columns);
+          } catch (err) {
+            $("loading").classList.add("hidden");
+            $("error").textContent = `Error: ${err.message}`;
+            $("error").classList.remove("hidden");
+          }
+        };
+
+        $("btn-accept").addEventListener("click", async () => {
+          const selected = [...document.querySelectorAll(".row-check:checked")]
+            .map((cb) => allRows[parseInt(cb.dataset.i)])
+            .filter(Boolean);
+          if (!selected.length) return;
+          if (app && typeof app.sendResult === "function") {
+            await app.sendResult({ action: "accepted", rows: selected });
+          }
+          $("confirm").classList.remove("hidden");
+          setTimeout(() => $("confirm").classList.add("hidden"), 3000);
+        });
+
+        $("btn-reject").addEventListener("click", async () => {
+          const selected = [...document.querySelectorAll(".row-check:checked")]
+            .map((cb) => allRows[parseInt(cb.dataset.i)])
+            .filter(Boolean);
+          if (!selected.length) return;
+          if (app && typeof app.sendResult === "function") {
+            await app.sendResult({ action: "rejected", rows: selected });
+          }
+          $("confirm").classList.remove("hidden");
+          setTimeout(() => $("confirm").classList.add("hidden"), 3000);
+        });
+      })();
+    </script>
+  </body>
+</html>

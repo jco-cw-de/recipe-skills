@@ -1,0 +1,53 @@
+# MCP Apps Skill for Workato
+# A knowledge bundle for building interactive HTML UIs that render inline
+# in MCP-compatible hosts (Claude, ChatGPT, VS Code, etc.).
+
+name: workato-mcp-apps
+version: 1.0.0
+description: >
+  Build MCP Apps — interactive HTML UIs that render inline in LLM chat hosts
+  via the ext-apps standard. Covers the App class lifecycle, tool result handling,
+  Workato MCP server setup (project assets mode), Claude Desktop integration,
+  and common UI patterns with Tailwind CSS.
+
+author: Workato
+license: MIT
+
+# No base skill dependency — standalone skill
+extends: null
+
+capabilities:
+  - Base HTML structure conforming to ext-apps@1.3.1 standard
+  - App class lifecycle (connect, ontoolresult, sendResult)
+  - Receiving and parsing tool results from Workato API endpoint recipes
+  - Sortable, filterable data tables with accept/reject actions
+  - Drag-and-drop interfaces
+  - Loading/error state management
+  - Workato MCP server setup in project assets mode
+  - Claude Desktop mcp-remote configuration
+
+entry_point: SKILL.md
+
+templates:
+  - templates/base.html
+  - templates/data-table.html
+
+patterns:
+  - patterns/app-lifecycle.md
+  - patterns/workato-integration.md
+
+validation:
+  - validation-checklist.md
+  - workato
+  - claude
+  - chatgpt
+  - vscode
+
+tags:
+  - mcp-apps
+  - ui
+  - interactive
+  - ext-apps
+  - workato
+  - html
+  - tailwind
