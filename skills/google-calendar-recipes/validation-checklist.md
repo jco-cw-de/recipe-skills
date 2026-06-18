@@ -33,6 +33,8 @@ The following checks are specific to Google Calendar connector recipes.
 
 - [ ] Calendar ID defaults to `"primary"` unless a specific calendar is required
 - [ ] Calendar ID is passed as a string, not hardcoded integer
+- [ ] Calendar ID for `__adhoc_http_action` path must be URL-encoded (`%40` for `@`)
+- [ ] Do not use native `search_events` for programmatic calendar access — Calendar ID picklist cannot be populated from recipe JSON
 
 ## Triggers
 
@@ -44,3 +46,5 @@ The following checks are specific to Google Calendar connector recipes.
 - [ ] Datetime values use ISO 8601 format: `YYYY-MM-DDTHH:MM:SSZ`
 - [ ] Timezone is passed as an IANA string (e.g. `America/Los_Angeles`, `UTC`)
 - [ ] freeBusy `timeMin`/`timeMax` are full ISO 8601 strings including `T` and `Z`
+- [ ] Handle both `start.dateTime` (timed) and `start.date` (all-day) in event processing
+- [ ] Filter cancelled events: `e.status !== 'cancelled'`

@@ -7,6 +7,19 @@ Use paths **without** a leading `/`.
 
 ---
 
+## Choosing Between Native Actions and Adhoc HTTP
+
+| Scenario                                               | Recommendation                                                        |
+| ------------------------------------------------------ | --------------------------------------------------------------------- |
+| Calendar ID known at recipe-write time (literal email) | `__adhoc_http_action` GET                                             |
+| Calendar ID from user input / dynamic                  | Native `search_events` (user selects from picklist in UI)             |
+| Creating events                                        | Native `create_event` — `calendar` field accepts a picklist selection |
+| Listing events programmatically                        | `__adhoc_http_action` GET `/calendar/v3/calendars/{id}/events`        |
+
+**Native actions with picklist fields (Calendar, Attendees, etc.) cannot be pre-populated from recipe JSON.** The field appears empty in the UI and blocks activation. Use adhoc HTTP when the value must come from code rather than a user-interactive picklist.
+
+---
+
 ## Path Format
 
 ```

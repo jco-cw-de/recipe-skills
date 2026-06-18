@@ -440,6 +440,49 @@ show "invalid source" in the Workato UI even though lint passes clean.
 Native actions (`create_event`, `search_events`, etc.) return data directly without a
 `["body"]` wrapper. Use `["id"]`, `["summary"]`, `["start", "date_time"]` etc. directly.
 
+### 6. `search_events` native action — Calendar ID is a dynamic picklist
+
+The `search_events` native action's `Calendar ID` field renders as a dynamic picklist loaded from the connection. A literal string like `"primary"` or `"user@example.com"` set in `input.calendar_id` does NOT populate the UI field — the platform shows it as empty and blocks recipe activation with "Please complete this required field."
+
+**Use `__adhoc_http_action` instead for programmatic calendar access:**
+
+```
+GET calendar/v3/calendars/{calendarId}/events
+```
+
+The calendar email goes directly in the URL path (URL-encoded: `%40` for `@`). This is a GET request so no JSON body issues. Query parameters (`timeMin`, `timeMax`, `singleEvents`, `orderBy`) go in `input.data` and are correctly sent as query params.
+
+```json
+{
+  "provider": "google_calendar",
+  "name": "__adhoc_http_action",
+  "input": {
+    "verb": "get",
+    "response_type": "json",
+    "path": "calendar/v3/calendars/user%40example.com/events",
+    "input": {
+      "data": {
+        "timeMin": "=formula + 'T00:00:00Z'",
+        "timeMax": "=formula + 'T23:59:59Z'",
+        "singleEvents": "true",
+        "orderBy": "startTime"
+      }
+    }
+  }
+}
+```
+
+The response `items` array contains event objects with `summary`, `status`, `start.dateTime`, `end.dateTime`. All-day events have `start.date` instead of `start.dateTime` — handle both.
+
+### 7. All-day events have `start.date` not `start.dateTime`
+
+Google Calendar events split into two types:
+
+- **Timed events:** `start.dateTime` (ISO 8601 with time) — these block specific hour slots
+- **All-day events:** `start.date` (date only, no time) — do not block specific hour slots
+
+When processing events to find busy hours, check for `start.dateTime` and skip events that only have `start.date`.
+
 ---
 
 ## Validation
