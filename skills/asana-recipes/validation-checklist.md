@@ -31,6 +31,8 @@ The following checks are specific to Asana connector recipes.
 - [ ] Workspace/project GIDs are parameterized OR intentionally hardcoded — if exposing as an MCP tool, consider hardcoding the workspace GID to prevent AI agents from substituting GIDs from their own integrations
 - [ ] `pick_list` values match Asana API enum values (e.g., `resource_subtype`: default_task, milestone, approval)
 - [ ] `dynamicPickListSelection` included where the connector requires it (e.g., `new_event` trigger)
+- [ ] `completed` included in `opt_fields` if filtering by completion status
+- [ ] Use `.where('completed': false).to_json` in return_response to filter server-side, not client-side
 
 ## Datapill Paths
 

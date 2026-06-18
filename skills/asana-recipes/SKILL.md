@@ -222,7 +222,25 @@ All Asana resources are identified by GID (string, not integer). Always type GID
 > formula) causes a 400 error: "workspace: Not a Long". Use the plain string value
 > `"10403697401604"` in the JSON input data.
 
-### 5. Resource subtypes
+### 5. Filtering arrays before returning
+
+The Workato formula `.where` method filters arrays. Use it before `.to_json` in `return_response` to exclude unwanted records server-side rather than relying on client-side filtering:
+
+```json
+"tasks": "=_dp('{...path to array...}').where('completed': false).to_json"
+```
+
+This is more reliable than client-side filtering because the `completed` field must be explicitly requested via `opt_fields` — if it's missing from the API response, client-side filter has nothing to check.
+
+**opt_fields requirement:** Always include `completed` in the Asana `opt_fields` parameter when the recipe needs to filter by completion status:
+
+```
+opt_fields: "gid,name,due_on,assignee_status,completed,custom_fields,..."
+```
+
+Without `completed` in `opt_fields`, the field is absent from the response and `.where('completed': false)` will silently return an empty array.
+
+### 6. Resource subtypes
 
 Tasks can be `default_task`, `milestone`, or `approval`. Use `pick_list` for these enums:
 
