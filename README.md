@@ -29,6 +29,7 @@ Recipe Skills teach AI agents how to generate valid Workato recipe JSON. Each sk
 | Skill | Connector | Native Actions | Triggers |
 |-------|-----------|:-:|:-:|
 | [asana-recipes](skills/asana-recipes/) | Asana | 16 | 2 |
+| [datatable-recipes](skills/datatable-recipes/) | Workato Data Tables | 7 | 4 |
 | [gmail-recipes](skills/gmail-recipes/) | Gmail | 3 | 1 |
 | [jira-recipes](skills/jira-recipes/) | Jira | 17 | 11 |
 | [salesforce-recipes](skills/salesforce-recipes/) | Salesforce | 32 | 15 |
@@ -39,9 +40,25 @@ Action and trigger counts reflect what is audited in each skill's `lint-rules.js
 
 ## Quick Start
 
-### With Claude Code
+### Open the folder — your agent discovers the skills
 
-This repo includes slash commands for each skill. From this repo directory:
+Clone the repo and open it in any [`AGENTS.md`](AGENTS.md)-aware agent (Codex, Cursor, Windsurf, Claude Code, and others). The root [`AGENTS.md`](AGENTS.md) tells the agent what this library is, the mandatory load order, and how to route a request to the right skill — no manual per-file path-pointing required.
+
+Then just ask for a recipe:
+- "Create an API endpoint recipe that accepts customer data"
+- "Create a recipe to search for a Stripe customer by email and create a PaymentIntent"
+- "Create a recipe to upsert a Salesforce Contact by external ID"
+- "Create a slash command that collects user input via dialog and posts to Slack"
+- "Create a recipe that searches Jira issues by JQL and returns sprint status"
+- "Create a recipe that creates an Asana task with subtasks"
+
+The agent loads the base skill (`skills/workato-recipes/SKILL.md`) first, then the relevant connector skill, and uses each skill's documentation, templates, and lint rules to generate valid recipe JSON.
+
+Each skill follows the [open agent skills standard](https://agentskills.io): every `SKILL.md` carries `name`/`description` frontmatter, and every `skill.yaml` declares an `entry_point` and `extends: workato-recipes`. SKILL.md-aware tooling can parse this metadata to load skills automatically; `AGENTS.md`-aware tooling routes from the root file.
+
+### Bonus: Claude Code slash commands
+
+Claude Code users get bundled slash commands as a convenience wrapper over the same skills. From this repo directory:
 
 ```bash
 /workato-recipes    # Load recipe fundamentals
@@ -53,33 +70,7 @@ This repo includes slash commands for each skill. From this repo directory:
 /asana-recipes      # Generate Asana recipes
 ```
 
-Then ask the agent to generate a recipe:
-- "Create an API endpoint recipe that accepts customer data"
-- "Create a recipe to search for a Stripe customer by email and create a PaymentIntent"
-- "Create a recipe to upsert a Salesforce Contact by external ID"
-- "Create a slash command that collects user input via dialog and posts to Slack"
-- "Create a recipe that searches Jira issues by JQL and returns sprint status"
-- "Create a recipe that creates an Asana task with subtasks"
-
-The agent uses the skill's documentation, templates, and lint rules to generate valid recipe JSON.
-
-### With Other AI Agents (Codex, Cursor, Windsurf, etc.)
-
-Each skill directory contains a `SKILL.md` file following the [open agent skills standard](https://agentskills.io). Any SKILL.md-aware tool can discover and load these skills automatically.
-
-To load skills manually, point your agent to the entry points:
-
-1. **Load the base skill first:**
-   ```
-   Read skills/workato-recipes/SKILL.md
-   ```
-
-2. **Then load a connector skill:**
-   ```
-   Read skills/<connector>-recipes/SKILL.md
-   ```
-
-Each `skill.yaml` defines an `entry_point` and `extends: workato-recipes` to declare the base dependency. Agents or tooling can parse this metadata to automate skill loading.
+These are optional — the `AGENTS.md` flow above works in Claude Code too.
 
 ### Deploy
 
