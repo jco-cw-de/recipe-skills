@@ -43,14 +43,19 @@ Do not:
 ### Connector Skill (required files)
 
 ```
+.claude/commands/
+└── <connector>-recipes.md    # REQUIRED - Slash-command entry point; linked into ~/.claude/commands/ by the installer
+
 skills/<connector>-recipes/
-├── SKILL.md     # REQUIRED - Behavioral guidance, decision logic
+├── SKILL.md                  # REQUIRED - Behavioral guidance, decision logic
 ├── lint-rules.json           # REQUIRED - Authoritative action/trigger name list
 ├── skill.yaml                # REQUIRED - Manifest (must set extends: workato-recipes)
 ├── validation-checklist.md   # REQUIRED - Connector-specific validation checks
 ├── patterns/                 # Recommended - Deep-dive pattern docs (one topic per file)
 └── templates/                # Recommended - Validated recipe JSON examples
 ```
+
+> **If `.claude/commands/<connector>-recipes.md` is missing, the skill will never be available as a `/connector-recipes` slash command.** The installer's link loop only picks up files from `.claude/commands/`. The skill content can exist in `skills/` and still be completely unreachable.
 
 ### Base Skill (workato-recipes)
 
@@ -223,7 +228,23 @@ Then organize by **decision context**, not alphabetical listing:
 
 See `skills/asana-recipes/SKILL.md` for the cleanest example of this pattern.
 
-### Step 5: Write validation-checklist.md
+### Step 5: Create the command entry point
+
+Create `.claude/commands/<connector>-recipes.md`. This is the file the installer links into `~/.claude/commands/` so the skill is available as a `/connector-recipes` slash command. Without it, none of the content in `skills/` is reachable.
+
+The command file is a **condensed summary** of SKILL.md — not a copy. It should cover:
+- The dependency notice (`/workato-recipes` first)
+- Provider name and how to discover it (if the connector is a custom SDK connector)
+- Config block example
+- Key actions with one-line descriptions
+- Critical datapill path rules
+- Any connector-specific gotchas (deprecated actions, unusual field formats, etc.)
+- References to `SKILL.md` and `patterns/` for detail
+- End with `Tool loaded.`
+
+Use an existing command file as a reference — `jira-recipes.md` is a clean, concise example.
+
+### Step 6: Write validation-checklist.md
 
 Must open with a reference to the base checklist:
 
@@ -244,7 +265,7 @@ Must open with a reference to the base checklist:
 
 See `skills/gmail-recipes/validation-checklist.md` for the simplest example.
 
-### Step 6: Create templates
+### Step 7: Create templates
 
 - Must be actual Workato recipe JSON that has been successfully pushed via `wk push`
 - Use real values, not placeholders
@@ -252,7 +273,7 @@ See `skills/gmail-recipes/validation-checklist.md` for the simplest example.
 - Include at least one template for the connector's most common operation
 - Update `skill.yaml` to list each template
 
-### Step 7: Create patterns (recommended)
+### Step 8: Create patterns (recommended)
 
 One markdown file per deep-dive topic:
 - Connector-specific query syntax (SOQL, JQL, Gmail query operators)
@@ -355,6 +376,7 @@ Before submitting, verify your changes against at least 2 connector skills. The 
 
 ### PR checklist
 
+- [ ] `.claude/commands/<connector>-recipes.md` is present (skill is unreachable without it)
 - [ ] `lint-rules.json` is present and every name verified against actual Workato connector
 - [ ] `skill.yaml` is valid YAML and includes `extends: workato-recipes`
 - [ ] `SKILL.md` follows the established section structure
