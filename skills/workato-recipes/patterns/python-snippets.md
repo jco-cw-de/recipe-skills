@@ -9,6 +9,7 @@ Workato's "Python snippets by Workato" connector exposes a `py_eval` provider wi
 Use `py_eval` when:
 
 - Walking nested JSON structures (especially arrays-of-arrays from `parse_json_v2`)
+- Filtering an array of complex/nested objects by an inner field's value — Workato has no `.filter`/`.select`/`.reject` for arrays; see [this community forum answer](https://systematic.workato.com/t5/workato-pros-discussion-board/can-we-filter-a-complex-structure/m-p/5777) (a forum user's answer, not an official Workato statement). For a handful of items, `foreach` + `if` + `insert_to_list` (see [foreach.md](../control-flow/foreach.md)) also works; prefer Python once that chain grows past ~3 steps or needs to scale to large arrays.
 - Extracting positional elements from arrays — datapill paths can't index arrays (see [datapill-syntax.md](../fundamentals/datapill-syntax.md#array-element-access-explicit))
 - Building HTTP request bodies that need integer typing or operator-style keys (see [adhoc-http-actions.md](./adhoc-http-actions.md#raw-json-body-with-datapills) Pattern 1)
 - Conditional logic more involved than a single ternary
