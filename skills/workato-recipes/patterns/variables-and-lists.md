@@ -583,12 +583,15 @@ This example shows using a variable to capture a customer ID from either a searc
     ```
     Workato auto-iterates over the list and builds the response array.
 
+13. **Array-of-primitive fields nested 2+ `current_item` levels deep get stringified, not stripped**: Distinct from gotcha #12 above — that one is single-level `return_response` list mapping and fails by *stripping* the value entirely if you skip the `current_item` decomposition. This one is different: a bare array-of-string (or other primitive) nested inside a *multi-level* `current_item` chain (e.g. two levels of array decomposition deep, like `quote[current_item].lines[current_item].serial_numbers`) silently arrives as literal bracket-and-quote text (`["value"]`) at the consuming recipe, rather than being stripped or staying a real array — even though the surrounding object-array levels decompose correctly. Confirmed from a live recipe pair (2173209 → 2173215, 2026-07-03). **Fix:** wrap the primitive in a single-field object (e.g. `{"serial_number": "..."}`) so it becomes array-of-object, which the `____source`/`current_item` decomposition mechanism handles correctly at any nesting depth. See [foreach.md](../control-flow/foreach.md) for the full write-up.
+
 ## Validation Checklist
 
 - [ ] Variable actions use `workato_variable` provider (NOT `workato`)
 - [ ] Variable actions use `declare_variable` (NOT `set_variable`)
 - [ ] Input uses `variables.schema` (stringified JSON) + `variables.data.{field}` structure
 - [ ] Schema entries have `"parent": ["variables", "data"]`
+- [ ] Array-of-primitive list items nested 2+ `current_item` levels deep are wrapped as array-of-object — see [foreach.md](../control-flow/foreach.md)
 - [ ] `declare_variable` EIS has `"control_type": "form-schema-builder"` with `schema` and `data` properties
 - [ ] EOS field name matches the variable field name (NOT `"value"`)
 - [ ] Datapill references use `"provider": "workato_variable"` and path uses the field name
