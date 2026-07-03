@@ -583,12 +583,15 @@ This example shows using a variable to capture a customer ID from either a searc
     ```
     Workato auto-iterates over the list and builds the response array.
 
+13. **Every schema field needs an explicit `control_type`, even scalars**: A field in `variables.schema`/`list_item_schema_json` (or a `py_eval` `code_input.schema` — see [python-snippets.md](python-snippets.md)) that omits `control_type` imports fine and passes `wk lint`, but the Workato UI cannot render a datapill-mapping target for it at all. Confirmed from a live recipe (2173215, 2026-07-02): a scalar string field with `name`/`type`/`optional`/`label`/`parent` but no `control_type` had no way to accept a mapped pill in the editor; adding `"control_type": "text"` fixed it immediately. Set `control_type` on every leaf field, not just the ones that feel like top-level inputs.
+
 ## Validation Checklist
 
 - [ ] Variable actions use `workato_variable` provider (NOT `workato`)
 - [ ] Variable actions use `declare_variable` (NOT `set_variable`)
 - [ ] Input uses `variables.schema` (stringified JSON) + `variables.data.{field}` structure
 - [ ] Schema entries have `"parent": ["variables", "data"]`
+- [ ] Every schema/list-item field declares an explicit `control_type`, including scalars
 - [ ] `declare_variable` EIS has `"control_type": "form-schema-builder"` with `schema` and `data` properties
 - [ ] EOS field name matches the variable field name (NOT `"value"`)
 - [ ] Datapill references use `"provider": "workato_variable"` and path uses the field name

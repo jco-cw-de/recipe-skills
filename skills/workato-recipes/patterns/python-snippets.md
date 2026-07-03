@@ -123,8 +123,11 @@ Standard Python is universally understood, agent-LLMs author it reliably, `print
 - **`code_input.schema`** is a stringified JSON array of input field definitions. Each must include `"parent": ["code_input", "data"]`.
 - **`code_input.data`** maps each declared input field name to its value (datapill, formula, or literal).
 - **`code_output_schema_json`** is a stringified JSON array of output field definitions. The Python function's return-dict keys must match these names.
+- **Every field in `code_input.schema` and `code_output_schema_json` needs an explicit `control_type`** (e.g. `"text"`, `"number"`), even plain scalar strings — see the CRITICAL note below.
 - **EIS** uses `control_type: "form-schema-builder"` with `schema` + `data` properties (mirrors `declare_variable`).
 - **EOS** wraps the output dict in an `output` object — datapill access uses `path: ["output", "<field-name>"]`.
+
+> **CRITICAL: a schema field without `control_type` imports fine and passes `wk lint`, but the Workato UI cannot render a datapill-mapping target for it.** Confirmed from a live recipe (2173215, 2026-07-02): a scalar string field in `code_input.schema` was defined with `name`/`type`/`optional`/`label`/`parent` but no `control_type` — the field appeared in the step's input form with no way to drop a pill onto it. Every other field in the same schema, which all had an explicit `control_type`, mapped normally. Adding `"control_type": "text"` to the field definition (and its matching `extended_input_schema` entry) immediately fixed it. This applies to array/object fields too, not just top-level scalars — set `control_type` on every leaf field you define, even ones that seem structural.
 
 ---
 
@@ -219,6 +222,7 @@ def _email_to_display_name(email):
 - [ ] Config entry omits `account_id` entirely
 - [ ] `code` defines `def main(input):` returning a dict
 - [ ] Each input schema field includes `"parent": ["code_input", "data"]`
+- [ ] Every `code_input`/`code_output_schema_json` field (including scalars) declares an explicit `control_type` — omitting it silently blocks datapill mapping in the UI even though import and `wk lint` succeed
 - [ ] EIS uses `control_type: "form-schema-builder"` with `schema` + `data` properties
 - [ ] Output schema fields match the keys returned from `main()`
 - [ ] Datapill references use `path: ["output", "<field-name>"]`

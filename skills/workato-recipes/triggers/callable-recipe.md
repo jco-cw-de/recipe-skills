@@ -76,6 +76,8 @@ Define return values in `result_schema_json`:
 
 **CRITICAL:** Every field in `result_schema_json` MUST be present in EVERY `return_result` action.
 
+**CRITICAL:** Every field here needs the same `control_type` as [Input Parameters](#field-schema-properties) above, even plain scalar strings — a field without one imports fine and passes `wk lint`, but the Workato UI (and a `py_eval`/`declare_variable` step feeding it) cannot render a datapill-mapping target for it. See [python-snippets.md](../patterns/python-snippets.md) for a confirmed live incident.
+
 ## Returning Results
 
 Use the `return_result` action:
