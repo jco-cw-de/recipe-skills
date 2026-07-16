@@ -113,6 +113,8 @@ Use the `return_result` action:
 | Boolean false | `"false"` |
 | Integer | `"123"` (as string) |
 
+> **Never use a literal empty string `""` for "no value" in a `return_result` field, on any path (success or catch).** Confirmed from a live recipe (2168294, 2026-07-02): a success-path `return_result` shipped with `"error": ""` and the field came back without its mandatory value after import — the field must be `"=null"` (or any non-empty literal) instead. Only the catch-block case was previously documented here; the same failure was observed outside a catch block.
+
 ## Accessing Input Parameters
 
 ```json
@@ -167,7 +169,7 @@ Every `return_result` action needs matching extended schemas:
 
 - [ ] `result_schema_json` defines all expected return fields
 - [ ] Every `return_result` action provides values for ALL fields in `result_schema_json`
-- [ ] Catch blocks use `"=null"` for unavailable return fields (NOT empty string `""`)
+- [ ] Every `return_result` (success path included, not just catch blocks) uses `"=null"` for an absent/empty text field (NOT empty string `""`)
 - [ ] `parameters_schema_json` defines all expected input fields
 - [ ] `extended_output_schema` wraps parameters under a `"parameters"` object
 - [ ] Trigger `as` is `"trigger"` and input parameter datapills use `["parameters", "field_name"]` path

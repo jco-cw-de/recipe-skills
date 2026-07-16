@@ -135,6 +135,8 @@ The `input` object defines conditions using this structure:
 | `starts_with` | LHS starts with RHS | Yes |
 | `ends_with` | LHS ends with RHS | Yes |
 
+> **Confirmed from a live recipe (2168294, 2026-07-02):** the equality operands are `equals_to` / `not_equals_to`, NOT bare `equals` / `not_equals`. A recipe pushed with `not_equals` imported without error but the condition was "not properly defined" (silently non-functional) in the Workato UI. This was independently corroborated by [gmail-recipes/patterns/native-gmail-actions.md](../../gmail-recipes/patterns/native-gmail-actions.md), which already used `equals_to`. `greater_than`, `less_than`, `contains`, `starts_with`, `ends_with` have not been verified against a live recipe — treat them with caution until confirmed.
+
 ## Common Patterns
 
 ### Check if Record Exists
