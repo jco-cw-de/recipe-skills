@@ -1,0 +1,18 @@
+{
+  "version": "0.1.0",
+  "connector": "teams_bot",
+  "connector_internals": [],
+  "valid_action_names": [
+    "get_user_by_principal_name",
+    "post_blocks_message"
+  ],
+  "valid_trigger_names": [
+    "bot_command"
+  ],
+  "action_rules": [],
+  "_notes": {
+    "verification_status": "All 3 names confirmed in 5 production recipes in a live Workato workspace, and re-confirmed by activation-testing a scratch recipe (wk recipes start) against the same workspace.",
+    "get_user_by_principal_name": "Observed with two different input fields across different recipes: `principal_name` (email/UPN) in one recipe, `id` (Azure AD object ID, typically sourced from the bot_command trigger's context.from.aadObjectId) in three others. Both are real, live-verified inputs to the same action -- likely alternate lookup modes on one field, but no toggleCfg was captured in any of the source recipes to confirm that formally.",
+    "unverified": "No other action or trigger name has been verified against a live connector. Do not add names here from vendor API docs or general knowledge alone."
+  }
+}
