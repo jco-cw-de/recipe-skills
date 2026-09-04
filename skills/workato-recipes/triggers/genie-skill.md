@@ -188,7 +188,7 @@ For genie skills, **the canonical "fail with a message" pattern is `workflow_ret
 }
 ```
 
-> **Note:** `stop` with `stop_with_error: "true"` and a message is rejected by the recipe visualizer in genie skill recipes (`unknown keyword stop`). Only `stop_with_error: "false"` (graceful exit, no error message) is supported for the `stop` keyword. For all error paths, return via `workflow_return_result` with `success: false`.
+> **Note:** An earlier version of this doc claimed `stop` with `stop_with_error: "true"` is rejected by the recipe visualizer in genie skill recipes (`unknown keyword stop`). That claim is contradicted by a verified, active, live production genie skill recipe using exactly this construct inside a `catch` block (observed 2026-09-04) — the recipe saves, activates, and runs. It still returns nothing structured to the genie's LLM caller, though, so `workflow_return_result` with `success: false` remains the recommended pattern for all genie error paths.
 
 ---
 
@@ -226,7 +226,7 @@ The `trigger_description` on this file appears to be ignored by the UI (see gotc
 - [ ] `parameters_schema_json` and `result_schema_json` are stringified JSON arrays (NOT `input_schema`/`output_schema`)
 - [ ] Each `workflow_return_result.input.result` key matches a field in `result_schema_json`
 - [ ] `requires_user_confirmation` is present (string `"true"` or `"false"`)
-- [ ] Error paths use `workflow_return_result` with `success: false` (NOT `stop` with `stop_with_error: "true"`)
+- [ ] Error paths use `workflow_return_result` with `success: false` for a structured result the genie can read (a `stop` with `stop_with_error: "true"` has been observed working, but gives the LLM caller nothing to act on)
 - [ ] Config entry for `workato_genie` includes `"name": "workato_genie"`, `"account_id": null`, and `"skip_validation": false`
 - [ ] `workflow_return_result` has both `extended_input_schema` and `extended_output_schema` matching the result fields
 
@@ -238,4 +238,4 @@ The `trigger_description` on this file appears to be ignored by the UI (see gotc
 - [Datapill Syntax](../fundamentals/datapill-syntax.md)
 - [Python Snippets](../patterns/python-snippets.md) — preferred for any non-trivial transformation inside a genie skill
 - [Data Table Trigger](./data-table.md) — for background recipes triggered by row events (typically paired with genie skills that write to those tables)
-- [Stop Action](../control-flow/stop.md) — `stop_with_error: "true"` is NOT supported in genie skills; use `workflow_return_result` with `success: false` instead
+- [Stop Action](../control-flow/stop.md) — for genie error paths, prefer `workflow_return_result` with `success: false`; `stop_with_error: "true"` is not confirmed to be rejected, but gives the LLM caller nothing structured

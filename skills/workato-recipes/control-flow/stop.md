@@ -96,9 +96,9 @@ To return a proper error response instead of stopping, use a `return_response` a
 
 ### Genie Skill Recipes
 
-**`stop` with `stop_with_error: "true"` is NOT supported in genie skills.** The recipe visualizer rejects it as `unknown keyword stop`.
+An earlier version of this doc claimed `stop` with `stop_with_error: "true"` is rejected by the recipe visualizer in genie skills (`unknown keyword stop`). That claim does not hold in general: verified 2026-09-04 against a live, **active** production genie skill recipe (`workato_genie`/`start_workflow` trigger) containing a `stop` action with `stop_with_error: "true"` and a `stop_reason` inside a `catch` block — the recipe saves, activates, and runs with this construct present. If your workspace does reject it, treat that as workspace/version-specific and verify directly rather than assuming either behavior.
 
-Only `stop_with_error: "false"` works — but it provides no error message to the user. For error paths in genie skills, use `workflow_return_result` with `success: false` instead:
+Regardless of whether `stop` is accepted, it still returns nothing structured to the genie's LLM caller — only the job-level `stop_reason` is recorded, and the genie has no result to read. For error paths where the genie itself needs a readable result, use `workflow_return_result` with `success: false` instead:
 
 ```json
 {
@@ -139,7 +139,7 @@ When stop fires, the callable recipe returns without sending a reply. The caller
 
 4. **Empty API response**: In API endpoint recipes, stop produces an empty 200 response — not a timeout or error. If you need structured error responses, use `return_response` instead.
 
-5. **Genie limitation**: `stop_with_error: "true"` is rejected in genie skill recipes. Use `workflow_return_result` with `success: false` for genie error paths.
+5. **Genie skill recipes**: `stop_with_error: "true"` has been observed working in a live, active genie skill recipe (see note above) — it is not confirmed to be universally rejected. Still, prefer `workflow_return_result` with `success: false` for genie error paths, since `stop` returns nothing structured to the genie's LLM caller.
 
 ## Validation Checklist
 
@@ -148,7 +148,7 @@ When stop fires, the callable recipe returns without sending a reply. The caller
 - [ ] `stop_with_error` is a string, not a boolean
 - [ ] `stop_reason` is present when `stop_with_error` is `"true"`
 - [ ] Stop block is inside a `block` array (typically in an `else` block)
-- [ ] If in a genie skill: NOT using `stop_with_error: "true"` (use `workflow_return_result` instead)
+- [ ] If in a genie skill: error paths prefer `workflow_return_result` with `success: false` over `stop`, since only that pattern gives the genie's LLM caller a structured result (`stop_with_error: "true"` is not confirmed to be rejected, but returns nothing useful to the genie)
 
 ## Related Documentation
 
