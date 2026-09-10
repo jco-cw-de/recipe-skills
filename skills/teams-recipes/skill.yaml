@@ -3,7 +3,7 @@
 # Workato's Workbot for Microsoft Teams connector (teams_bot).
 
 name: teams-recipes
-version: 1.2.0
+version: 1.3.0
 description: >
   Microsoft Teams Workbot integration recipes for Workato. This skill enables
   AI agents to generate valid Workato recipe JSON for receiving Teams bot
@@ -19,6 +19,7 @@ extends: workato-recipes
 capabilities:
   - Receive a Teams Workbot slash-style command with typed parameters, including string and date parameters
   - Respond to a user's "help" message with a fully custom reply
+  - Respond to a message that doesn't match any registered command (new_message_event)
   - Look up a Teams user by principal name (email/UPN) or Azure AD object ID
   - Post a block-based message (text and text-with-button blocks) to a user or channel, addressed by datapill or static ID
   - Reply with buttons that chain into other bot commands, with both static and formula-computed parameters
@@ -33,6 +34,7 @@ templates:
 
 patterns:
   - patterns/shared-teams-id-resolver.md
+  - patterns/real-time-events.md
 
 validation:
   - validation-checklist.md
@@ -54,25 +56,33 @@ tags:
 # verified. Do not add capabilities below without the same verification
 # (real recipe usage + activation test, see lint-rules.json _notes).
 gaps:
-  - pattern: Additional native actions/triggers
-    status: unverified
+  - pattern: Additional native actions
+    status: partially_verified
     description: >
-      bot_command, help_event (triggers), get_user_by_principal_name, and
-      post_blocks_message (actions) have been confirmed against a live
-      connector -- help_event by a full activation test (see
-      lint-rules.json's _notes.verification_status). Workato's own Workbot
-      for Microsoft Teams documentation additionally describes a Tab opened
-      trigger, a New message trigger (beta), a Delete message action, and a
-      Show tab using Adaptive Cards action, plus a generic custom action for
-      Microsoft Graph API calls -- none of these appear in any recipe in the
-      workspace this skill was verified against, and none have been
-      activation-tested yet, so none are included here. wk recipes import
-      does not validate action/trigger names against the live connector
-      (confirmed: a fabricated name imports without error), so only
-      production usage or activation-testing counts as verification -- as
-      demonstrated by help_event, the doc's UI label does not reliably
-      predict the internal name (e.g. "New help message trigger" is
-      internally `help_event`, not a snake_case of the label), so none of
-      these remaining names should be assumed correct without the same
-      editor-driven correction + activation test. See
+      bot_command, help_event, new_message_event, new_event (triggers),
+      get_user_by_principal_name, and post_blocks_message (actions) have
+      been confirmed against a live connector -- help_event by a full
+      activation test, new_message_event/new_event via the connector's own
+      trigger picker (see lint-rules.json's _notes.verification_status). The
+      connector's action picker additionally confirms Delete message, Post
+      message, Post message (old version), Post reply, Post reply (old
+      version), Post simple message, Post simple reply, Response to
+      real-time event, and Custom action all exist as real, selectable
+      actions -- but none of their internal `name` fields have been
+      captured yet (requires selecting each in the editor and saving, same
+      method used for the triggers). post_blocks_message is presumed (not
+      confirmed) to correspond to the picker's "Post message" label; "Post
+      reply" is very likely a distinct, still-unknown action. See
       lint-rules.json's _notes.workbotguide_gap.
+  - pattern: Tab opened trigger / Show tab using Adaptive Cards action
+    status: checked_not_available
+    description: >
+      Unlike the other gaps, this one has been actively checked, not merely
+      left untested. new_event's event_name is a live-search field; search
+      terms tab/task/card/fetch/adaptive/compose all returned zero matches
+      on the bot connection this skill was verified against. These
+      doc-described features are most likely gated behind an "Enterprise
+      Workbot" tier/manifest this connection isn't provisioned with (per
+      Workato's own documentation). See patterns/real-time-events.md. A
+      different teams_bot connection provisioned as an Enterprise Workbot
+      might expose these -- re-check before assuming this holds universally.

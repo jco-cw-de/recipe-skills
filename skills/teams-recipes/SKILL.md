@@ -4,7 +4,7 @@ description: Microsoft Teams Workbot (teams_bot) recipes for Workato. Enables AI
 license: MIT
 metadata:
   author: Your Name
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # Teams Recipes Skill
@@ -71,15 +71,19 @@ Use this skill when a recipe needs to expose a command that Teams users invoke f
 
 ## Native Connector Guidance
 
-The Teams connector provides 2 verified native actions and 2 verified triggers. See `lint-rules.json` for the authoritative list.
+The Teams connector provides 2 verified native actions and 4 verified triggers. See `lint-rules.json` for the authoritative list.
 
-**A naming-convention warning:** Workato's internal trigger/action `name` does not reliably follow the doc's UI label. Workato's own documentation calls one trigger the "New help message trigger"; its internal name is `help_event`, not `new_help_message` or any other snake_case of the label — confirmed the hard way (a guessed name imported without error via `wk recipes import`, then failed with "invalid datapill(s)" errors in the recipe editor until corrected). Never assume a doc label maps predictably to an internal name — verify against the actual connector (the recipe editor's connector/action picker, or real recipe usage) every time.
+**A naming-convention warning:** Workato's internal trigger/action `name` does not reliably follow the doc's UI label. Confirmed twice: the docs' "New help message trigger" is internally `help_event`, not `new_help_message`; the docs' "New message trigger" is internally `new_message_event`, not `new_message`. Never assume a doc label maps predictably to an internal name — verify against the actual connector (the recipe editor's connector/action picker, or real recipe usage) every time.
+
+**A trigger-family warning:** the connector's own trigger picker offers a 4th trigger, "New real-time event" (internal name `new_event`), which Workato's public documentation doesn't mention at all. It's a single generic, polymorphic trigger — not a fixed shape — whose `event_name` input picks which specific real-time event it receives, and whose output schema changes per event. See [patterns/real-time-events.md](patterns/real-time-events.md); it also explains why the doc's "Tab opened trigger" and "Show tab using Adaptive Cards" action appear to not be available at all on the bot connection this skill was verified against.
 
 ### Choosing the Right Trigger
 
 - **`bot_command`** — Use to expose a new slash-style command to Teams users. Requires a unique `action_name` and a `parameters` field (a JSON-stringified array of parameter definitions — each needs `name`, `label`, `type`, `control_type`, `optional`). The trigger's output includes both the declared `parameters` (per your schema) and a `context` object carrying details about the invoking user and conversation (e.g. `context.from.aadObjectId`). Also carries `hide_from_help` (string `"true"`/`"false"`) — every observed production trigger sets this explicitly, even when `false`.
   - **Parameter data types observed in production:** a plain string parameter uses `"type": "string"` + `"control_type": "text"`. A date-picker parameter uses `"type": "date_time"` + `"control_type": "date"` (plus `"parse_output": "date_conversion"` / `"render_input": "date_conversion"` in the trigger's own `extended_output_schema` entry for that field) — confirmed in a live production `bot_command` trigger. No `file`-type parameter has been observed in this workspace; do not assume it works without confirming first.
 - **`help_event`** — Use to reply with a fully custom message when a user sends `help` to the bot (DM or @mention). Takes no input. Like `bot_command`, its output carries a `context` object, and `context.from.aadObjectId` resolves the same way — feed it straight into `get_user_by_principal_name`'s `id` input to look up and reply to whoever asked for help. Only one `help_event` recipe can be active per bot at a time (per Workato's own documentation) — this is a bot-wide singleton, not a per-command trigger, so treat activating/deactivating it with more care than an ordinary `bot_command`. Activation-tested end-to-end: sending `help` to a live bot with this trigger active returns the configured reply.
+- **`new_message_event`** — Use to respond when a user DMs or @mentions the bot with text that doesn't match any registered `bot_command`. Confirmed via the connector's trigger picker; supports an optional trigger condition (a `filter` block) to scope it to specific channels, per the doc's "New message trigger" feature. Its output field paths have not been confirmed against a live schema yet — treat any specific field name as an educated guess, not a verified path, until checked.
+- **`new_event`** — A single generic trigger for real-time Bot Framework invoke events, selected via its `event_name` input (a live-search field, not a static list). Only the `application/search` ("Typeahead search") event has been confirmed available on the bot connection this skill was verified against, with a fully captured live output schema. See [patterns/real-time-events.md](patterns/real-time-events.md) for the schema, the top-level (not `context`-nested) `from.aadObjectId` path, and why tab/task-module-related events appear unavailable here.
 
 ### Choosing the Right Action
 
@@ -199,3 +203,4 @@ See [validation-checklist.md](validation-checklist.md) for the full checklist. A
 - **Base Skill:** `workato-recipes` — recipe structure, triggers, control flow, formulas
 - **Related:** `slack-recipes`' `slack_bot` variant — the closest structural precedent (a chat-platform Workbot), useful for comparison if extending this skill further
 - **Pattern:** [patterns/shared-teams-id-resolver.md](patterns/shared-teams-id-resolver.md) — centralizing external-ID-to-Teams-ID resolution in a callable recipe
+- **Pattern:** [patterns/real-time-events.md](patterns/real-time-events.md) — the generic `new_event` trigger, its `event_name` picklist, and the Typeahead search event's full schema

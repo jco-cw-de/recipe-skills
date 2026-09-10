@@ -29,6 +29,15 @@ The following checks are specific to the Workbot for Microsoft Teams (`teams_bot
 - [ ] Only one `help_event` recipe is intended to be active per bot at a time — flag to the user if this looks like it would create a second one
 - [ ] Caller context is read from `["context", "from", "aadObjectId"]`, same path as `bot_command` — do not assume a different structure without confirming first
 
+## `new_message_event` Trigger
+
+- [ ] Output field paths used (e.g. `message_text`, `conversation_id`) are flagged to the user as unconfirmed guesses, not asserted as verified — no live schema has been captured for this trigger yet
+
+## `new_event` Trigger
+
+- [ ] `input.event_name` is a real, live-search-confirmed value (currently only `application/search` is confirmed available) — never invent an `event_name` value from the doc's feature list (e.g. anything tab/task-related) without checking the picker first
+- [ ] Caller identity is read from `["from", "aadObjectId"]` (top-level), NOT `["context", "from", "aadObjectId"]` — this trigger's shape differs from `bot_command`/`help_event`
+
 ## `get_user_by_principal_name` Action
 
 - [ ] Input uses exactly one of `principal_name` (email/UPN) or `id` (Azure AD object ID) — do not include both
