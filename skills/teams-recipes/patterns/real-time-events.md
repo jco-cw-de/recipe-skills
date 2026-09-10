@@ -81,8 +81,12 @@ Confirmed live in the recipe editor (not activation-fired, but the editor resolv
 
 **Important structural difference from `bot_command`/`help_event`:** the caller-identity field is `from.aadObjectId` at the **top level** of the output, not nested under a `context` object (`context.from.aadObjectId`). Do not reuse the `bot_command`/`help_event` datapill path convention here without adjusting for this.
 
-`value.queryText`/`value.queryOptions`/`value.dataset` is the actual search request — this event exists to let a recipe populate a dynamic, server-side-searched dropdown (an Adaptive Card `Input.ChoiceSet` with a `dynamic` style) as the user types. The paired **"Response to real-time event"** action (picker label; internal name not yet captured — see `lint-rules.json`'s `_notes.workbotguide_gap`) is presumably how the recipe returns search results back to Teams, but this has not been built or tested yet.
+`value.queryText`/`value.queryOptions`/`value.dataset` is the actual search request — this event exists to let a recipe populate a dynamic, server-side-searched dropdown (an Adaptive Card `Input.ChoiceSet` with a `dynamic` style) as the user types.
+
+## The paired `invoke_response` action
+
+The picker's **"Response to real-time event"** action — internal name **`invoke_response`** — is presumably how a recipe returns results back to Teams for a `new_event` firing (e.g. the Typeahead search's result list). Confirmed real via direct picker selection, added as a step under a `new_event` (Typeahead search) trigger recipe. Its input was captured empty — no response-payload shape (e.g. how search results should be structured) has been configured or tested yet. A natural next step, not yet done: configure and activation-test a full `new_event` (Typeahead search) → `invoke_response` round trip against a live Adaptive Card with a dynamic `Input.ChoiceSet`.
 
 ## Verification status
 
-`new_event` as a trigger name, and the exact output schema above for the `application/search` event specifically, were both confirmed live via the recipe editor. The *absence* of tab/task-related events was confirmed by live search returning no matches for six plausible terms. Neither the "Response to real-time event" action's shape, nor a full end-to-end typeahead-search recipe, has been built or activation-tested yet.
+`new_event` and `invoke_response` as names, and the exact output schema above for the `application/search` event specifically, were all confirmed live via the recipe editor's connector picker. The *absence* of tab/task-related events was confirmed by live search returning no matches for six plausible terms. Neither `invoke_response`'s response-payload shape, nor a full end-to-end typeahead-search recipe, has been built or activation-tested yet.

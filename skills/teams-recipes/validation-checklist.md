@@ -60,3 +60,16 @@ The following checks are specific to the Workbot for Microsoft Teams (`teams_bot
 
 - [ ] `message_id` is sourced from a `post_blocks_message`/`post_blocks_reply_message` step's `id` output
 - [ ] `conversation_id` is NOT sourced from `get_user_by_principal_name`'s `id` output (confirmed wrong via a live job failure — a Teams user ID is not a conversation ID) — flag to the user that the correct source for this field is still unconfirmed
+
+## `post_simple_message` / `post_simple_reply` Actions
+
+- [ ] Only used when a recipe genuinely doesn't need rich blocks/buttons — prefer `post_blocks_message`/`post_blocks_reply_message` otherwise, since they're better documented and support buttons
+- [ ] `post_simple_message` requires a recipient field (same asymmetry as `post_blocks_message`); `post_simple_reply` does not (same as `post_blocks_reply_message`) — field names for these have not been fully captured yet, flag as unconfirmed if generating one
+
+## `post_bot_message` / `post_bot_reply` Actions
+
+- [ ] Treat these as deprecated/legacy — prefer `post_blocks_message`/`post_blocks_reply_message` unless the recipe specifically needs the `use_json` raw-JSON mode these carry and `post_blocks_message`/`post_blocks_reply_message` are confirmed not to support it
+
+## `invoke_response` Action
+
+- [ ] Only used to respond to a `new_event` firing in the same recipe — flag to the user that its response-payload shape is unconfirmed (captured with an empty input only)

@@ -3,13 +3,13 @@
 # Workato's Workbot for Microsoft Teams connector (teams_bot).
 
 name: teams-recipes
-version: 1.6.0
+version: 1.7.0
 description: >
   Microsoft Teams Workbot integration recipes for Workato. This skill enables
   AI agents to generate valid Workato recipe JSON for receiving Teams bot
   commands, responding to help requests, looking up Teams users, posting or
-  replying with adaptive-card-style block messages, and deleting messages,
-  via the `teams_bot` connector.
+  replying with adaptive-card-style block messages, deleting messages, and
+  responding to real-time Teams events, via the `teams_bot` connector.
 
 author: Your Name
 license: MIT
@@ -26,6 +26,7 @@ capabilities:
   - Reply with buttons that chain into other bot commands, with both static and formula-computed parameters
   - Delete a previously posted message (conversation ID sourcing still unconfirmed)
   - Post or reply with plain Markdown text when rich blocks/buttons aren't needed (post_simple_message/post_simple_reply)
+  - Respond to a real-time Teams event (e.g. a Typeahead search request) via invoke_response
   - Resolve a Teams user ID from an external-system identifier via a shared callable recipe
 
 entry_point: SKILL.md
@@ -59,23 +60,24 @@ tags:
 # verified. Do not add capabilities below without the same verification
 # (real recipe usage + activation test, see lint-rules.json _notes).
 gaps:
-  - pattern: Response to real-time event action
-    status: unverified
+  - pattern: Field-level shapes beyond the picker names themselves
+    status: partially_verified
     description: >
-      The only remaining item from the connector's own action picker whose
-      internal `name` hasn't been captured. It pairs with the new_event
-      trigger (see patterns/real-time-events.md) -- presumably how a recipe
-      returns results for e.g. a Typeahead search request. Every other
-      trigger and action visible in the connector's picker is now verified:
-      bot_command, help_event, new_message_event, new_event (triggers);
-      get_user_by_principal_name, post_blocks_message,
-      post_blocks_reply_message, post_bot_message, post_bot_reply,
-      post_simple_message, post_simple_reply, delete_message, and
-      __adhoc_http_action (actions) -- see lint-rules.json's
-      _notes.verification_status for how each was confirmed.
-      delete_message's `conversation_id` input source is confirmed real as
-      a field but its correct VALUE source is still unconfirmed (a Teams
-      user ID, the first thing tried, is confirmed WRONG).
+      Every trigger and action visible in the teams_bot connector's own
+      picker is now a verified name: bot_command, help_event,
+      new_message_event, new_event (triggers); get_user_by_principal_name,
+      post_blocks_message, post_blocks_reply_message, post_bot_message,
+      post_bot_reply, post_simple_message, post_simple_reply,
+      delete_message, invoke_response, and __adhoc_http_action (actions) --
+      see lint-rules.json's _notes.verification_status for how each was
+      confirmed. What's NOT yet fully verified is some of their internal
+      field shapes: delete_message's `conversation_id` VALUE source (a
+      Teams user ID, the first thing tried, is confirmed WRONG);
+      invoke_response's response-payload shape; new_message_event's output
+      field paths (still doc-modeled guesses); post_simple_message/reply's
+      and post_bot_message/reply's fields beyond what was captured
+      unconfigured. None of these block basic recipe generation, but none
+      should be presented as fully verified either.
   - pattern: Tab opened trigger / Show tab using Adaptive Cards action
     status: checked_not_available
     description: >
