@@ -4,7 +4,7 @@ description: Base skill for Workato recipe development. Provides foundational kn
 license: MIT
 metadata:
   author: Workato
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Workato Recipes Base Skill - Agent Instructions

@@ -3,7 +3,7 @@
 # Workato's Workbot for Microsoft Teams connector (teams_bot).
 
 name: teams-recipes
-version: 1.7.0
+version: 1.8.0
 description: >
   Microsoft Teams Workbot integration recipes for Workato. This skill enables
   AI agents to generate valid Workato recipe JSON for receiving Teams bot
@@ -24,7 +24,8 @@ capabilities:
   - Post a block-based message (text and text-with-button blocks) to a specific user or channel, addressed by datapill or static ID
   - Reply with a block-based message implicitly to whoever invoked the current command, with no recipient field needed
   - Reply with buttons that chain into other bot commands, with both static and formula-computed parameters
-  - Delete a previously posted message (conversation ID sourcing still unconfirmed)
+  - Delete a previously posted message, activation-tested end-to-end (message_id from the post step, conversation_id from the trigger's context.conversation.id)
+  - Post a message with a button that suspends the same job until clicked (or a timeout), then continues with new datapills (action_continue_flow) -- e.g. for a self-deleting message
   - Post or reply with plain Markdown text when rich blocks/buttons aren't needed (post_simple_message/post_simple_reply)
   - Respond to a real-time Teams event (e.g. a Typeahead search request) via invoke_response
   - Resolve a Teams user ID from an external-system identifier via a shared callable recipe
@@ -35,6 +36,7 @@ templates:
   - templates/bot-command-notify.json
   - templates/bot-command-buttons-reply.json
   - templates/custom-help-message.json
+  - templates/self-deleting-message.json
 
 patterns:
   - patterns/shared-teams-id-resolver.md
@@ -70,14 +72,22 @@ gaps:
       post_bot_reply, post_simple_message, post_simple_reply,
       delete_message, invoke_response, and __adhoc_http_action (actions) --
       see lint-rules.json's _notes.verification_status for how each was
-      confirmed. What's NOT yet fully verified is some of their internal
-      field shapes: delete_message's `conversation_id` VALUE source (a
-      Teams user ID, the first thing tried, is confirmed WRONG);
-      invoke_response's response-payload shape; new_message_event's output
-      field paths (still doc-modeled guesses); post_simple_message/reply's
-      and post_bot_message/reply's fields beyond what was captured
-      unconfigured. None of these block basic recipe generation, but none
-      should be presented as fully verified either.
+      confirmed. delete_message is now FULLY resolved and
+      activation-tested (conversation_id comes from the trigger's
+      context.conversation.id). Still open: invoke_response's
+      response-payload shape; new_message_event's output field paths
+      (still doc-modeled guesses); post_simple_message/reply's and
+      post_bot_message/reply's fields beyond what was captured
+      unconfigured; the action_continue_flow button's full click-then-
+      resume cycle (its fields and the new outputs it unlocks are
+      schema-confirmed live, but nobody has yet clicked the button on a
+      live message and confirmed a downstream step -- e.g. delete_message
+      -- fires correctly afterward). None of these block basic recipe
+      generation, but none should be presented as more verified than this.
+      Also newly confirmed: clock/wait_for_interval (base skill) CANNOT be
+      used inside a bot_command-triggered recipe -- a hard platform error,
+      not a style preference -- see lint-rules.json's
+      _notes.wait_for_interval_forbidden_in_workbot.
   - pattern: Tab opened trigger / Show tab using Adaptive Cards action
     status: checked_not_available
     description: >

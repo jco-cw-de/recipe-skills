@@ -14,7 +14,7 @@ The following checks are specific to the Workbot for Microsoft Teams (`teams_bot
 ## Datapill Paths
 
 - [ ] `bot_command` trigger datapills do NOT use a `["body"]` wrapper (native trigger, not adhoc HTTP)
-- [ ] Trigger parameters are read from `["parameters", "<param_name>"]`; caller context (e.g. the invoking user's Azure AD object ID) is read from `["context", "from", "aadObjectId"]`
+- [ ] Trigger parameters are read from `["parameters", "<param_name>"]`; caller context (e.g. the invoking user's Azure AD object ID) is read from `["context", "from", "aadObjectId"]`; the invoking conversation's ID is read from `["context", "conversation", "id"]` (activation-confirmed as `delete_message`'s `conversation_id` source)
 
 ## `bot_command` Trigger
 
@@ -22,6 +22,7 @@ The following checks are specific to the Workbot for Microsoft Teams (`teams_bot
 - [ ] `parameters` is a JSON-stringified array of parameter definitions (`name`, `label`, `type`, `control_type`, `optional`), matching `extended_output_schema`'s `parameters` object
 - [ ] A date parameter uses `"type": "date_time"` with `"control_type": "date"` (not `"type": "date"`) — and its `extended_output_schema` entry includes `"parse_output": "date_conversion"` / `"render_input": "date_conversion"`
 - [ ] `input.hide_from_help` is present as a string (`"true"` or `"false"`), matching production usage
+- [ ] The recipe does NOT contain a `clock`/`wait_for_interval` step anywhere — confirmed to fail outright with `"Use of long actions is not allowed in WorkBot recipes"` inside a `bot_command`-triggered recipe. Use an `action_continue_flow` button instead if a pause-before-continuing is needed.
 
 ## `help_event` Trigger
 
@@ -47,8 +48,11 @@ The following checks are specific to the Workbot for Microsoft Teams (`teams_bot
 - [ ] `channel` is set — this action always targets a specific channel/user, unlike `post_blocks_reply_message`
 - [ ] `blocks` is an array where each entry has a `block_type` (`text_block` or `text_with_button_block`) and a matching nested object with that same key
 - [ ] `text_block` entries use `"text_type": "body_text"` for standard message text, or `"text_type": "custom"` (with `"separator": "true"` and `"style": {"isSubtle": "true"}`) for a de-emphasized footer line — not a made-up `text_type` value
-- [ ] `text_with_button_block` entries include `bot_command` (the command this button should invoke), `button_type` (observed value: `"submit"`), `open_task_module` (string `"true"`/`"false"`), and `params` (a JSON string of the parameters that command's `bot_command` trigger expects)
-- [ ] When a `text_with_button_block`'s `params` value must be computed (not a straight datapill passthrough), the field is built in full formula mode (leading `=`), not as a template string with an embedded formula expression
+- [ ] `text_with_button_block` entries with `button_type: "submit"` include `bot_command` (the command this button should invoke), `open_task_module` (string `"true"`/`"false"`), and `params` (a JSON string of the parameters that command's `bot_command` trigger expects) — do NOT use `bot_command`/`params` on an `action_continue_flow` button, they don't apply
+- [ ] When a `submit` button's `params` value must be computed (not a straight datapill passthrough), the field is built in full formula mode (leading `=`), not as a template string with an embedded formula expression
+- [ ] `text_with_button_block` entries with `button_type: "action_continue_flow"` do NOT set `bot_command`/`params`/`open_task_module` — instead use `button_title` (mandatory), and optionally `header_text`, `button_id`, `separator`
+- [ ] When any block in `blocks` uses `action_continue_flow`, the action's own top-level input also needs a `timeout` field (an integer, in MINUTES despite being a bare numeric string — confirmed via the field's own UI hint) — do not assume seconds
+- [ ] Do not assume the message's own `id` output is missing just because it's absent from `extended_output_schema` once an `action_continue_flow` block is present — it was confirmed to still resolve as a valid datapill
 
 ## `post_blocks_reply_message` Action
 
@@ -59,7 +63,7 @@ The following checks are specific to the Workbot for Microsoft Teams (`teams_bot
 ## `delete_message` Action
 
 - [ ] `message_id` is sourced from a `post_blocks_message`/`post_blocks_reply_message` step's `id` output
-- [ ] `conversation_id` is NOT sourced from `get_user_by_principal_name`'s `id` output (confirmed wrong via a live job failure — a Teams user ID is not a conversation ID) — flag to the user that the correct source for this field is still unconfirmed
+- [ ] `conversation_id` is sourced from the triggering `bot_command`/`help_event`'s `["context", "conversation", "id"]` — activation-confirmed. Do NOT source it from `get_user_by_principal_name`'s `id` output (confirmed wrong via a live job failure — a Teams user ID is not a conversation ID)
 
 ## `post_simple_message` / `post_simple_reply` Actions
 

@@ -3,7 +3,7 @@
 # control flow, datapill syntax, and recipe structure fundamentals.
 
 name: workato-recipes
-version: 1.1.0
+version: 1.2.0
 description: >
   Base skill for Workato recipe development. Provides foundational knowledge
   for recipe JSON structure, trigger types, control flow patterns, and datapill
