@@ -3,7 +3,7 @@
 # Workato's Workbot for Microsoft Teams connector (teams_bot).
 
 name: teams-recipes
-version: 1.4.0
+version: 1.5.0
 description: >
   Microsoft Teams Workbot integration recipes for Workato. This skill enables
   AI agents to generate valid Workato recipe JSON for receiving Teams bot
@@ -74,12 +74,14 @@ gaps:
       field, implicitly replies to the invoking context) -- these are
       distinct actions, not the same one under two UI names. delete_message's
       `conversation_id` input source is still unconfirmed (a Teams user ID,
-      the first thing tried, is confirmed WRONG). The connector's action
-      picker additionally confirms Post message (old version), Post reply
-      (old version), Post simple message, Post simple reply, Response to
-      real-time event, and Custom action all exist as real, selectable
-      actions -- but none of their internal `name` fields have been captured
-      yet. See lint-rules.json's _notes.workbotguide_gap.
+      the first thing tried, is confirmed WRONG). The picker's "Custom
+      action" is resolved (not a gap): confirmed to be the standard
+      __adhoc_http_action, added to lint-rules.json's valid_action_names,
+      no connector-specific docs needed. The connector's action picker
+      still shows Post message (old version), Post reply (old version),
+      Post simple message, and Post simple reply as real, selectable
+      actions -- but none of their internal `name` fields have been
+      captured yet. See lint-rules.json's _notes.workbotguide_gap.
   - pattern: Tab opened trigger / Show tab using Adaptive Cards action
     status: checked_not_available
     description: >
