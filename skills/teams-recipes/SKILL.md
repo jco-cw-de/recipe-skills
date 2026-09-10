@@ -4,7 +4,7 @@ description: Microsoft Teams Workbot (teams_bot) recipes for Workato. Enables AI
 license: MIT
 metadata:
   author: Your Name
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Teams Recipes Skill
@@ -71,12 +71,15 @@ Use this skill when a recipe needs to expose a command that Teams users invoke f
 
 ## Native Connector Guidance
 
-The Teams connector provides 2 verified native actions and 1 verified trigger. See `lint-rules.json` for the authoritative list.
+The Teams connector provides 2 verified native actions and 2 verified triggers. See `lint-rules.json` for the authoritative list.
+
+**A naming-convention warning:** Workato's internal trigger/action `name` does not reliably follow the doc's UI label. Workato's own documentation calls one trigger the "New help message trigger"; its internal name is `help_event`, not `new_help_message` or any other snake_case of the label — confirmed the hard way (a guessed name imported without error via `wk recipes import`, then failed with "invalid datapill(s)" errors in the recipe editor until corrected). Never assume a doc label maps predictably to an internal name — verify against the actual connector (the recipe editor's connector/action picker, or real recipe usage) every time.
 
 ### Choosing the Right Trigger
 
 - **`bot_command`** — Use to expose a new slash-style command to Teams users. Requires a unique `action_name` and a `parameters` field (a JSON-stringified array of parameter definitions — each needs `name`, `label`, `type`, `control_type`, `optional`). The trigger's output includes both the declared `parameters` (per your schema) and a `context` object carrying details about the invoking user and conversation (e.g. `context.from.aadObjectId`). Also carries `hide_from_help` (string `"true"`/`"false"`) — every observed production trigger sets this explicitly, even when `false`.
   - **Parameter data types observed in production:** a plain string parameter uses `"type": "string"` + `"control_type": "text"`. A date-picker parameter uses `"type": "date_time"` + `"control_type": "date"` (plus `"parse_output": "date_conversion"` / `"render_input": "date_conversion"` in the trigger's own `extended_output_schema` entry for that field) — confirmed in a live production `bot_command` trigger. No `file`-type parameter has been observed in this workspace; do not assume it works without confirming first.
+- **`help_event`** — Use to reply with a fully custom message when a user sends `help` to the bot (DM or @mention). Takes no input. Like `bot_command`, its output carries a `context` object, and `context.from.aadObjectId` resolves the same way — feed it straight into `get_user_by_principal_name`'s `id` input to look up and reply to whoever asked for help. Only one `help_event` recipe can be active per bot at a time (per Workato's own documentation) — this is a bot-wide singleton, not a per-command trigger, so treat activating/deactivating it with more care than an ordinary `bot_command`. Activation-tested end-to-end: sending `help` to a live bot with this trigger active returns the configured reply.
 
 ### Choosing the Right Action
 
@@ -163,6 +166,10 @@ The standard shape for a Teams bot command: receive the command, resolve the cal
 
 See `templates/bot-command-notify.json` for the full working example.
 
+### Custom Help Message
+
+The same lookup-then-reply shape works for `help_event` as for `bot_command` — the only difference is there are no declared `parameters` to read, since the trigger fires on the literal word `help`, not a registered command. See `templates/custom-help-message.json`.
+
 ### Button That Invokes Another Command
 
 A `text_with_button_block` can chain into a second bot command: set `bot_command` to that command's `action_name`, and `params` to a JSON string of the values that command's own trigger `parameters` expect. See `templates/bot-command-buttons-reply.json` for a working example with two buttons chaining into two different commands.
@@ -183,6 +190,7 @@ See [validation-checklist.md](validation-checklist.md) for the full checklist. A
 
 - [`templates/bot-command-notify.json`](templates/bot-command-notify.json) — A `bot_command` trigger that looks up the calling user and posts a text-block reply. Structurally validated by import against a live Workato workspace; the two actions it uses (`get_user_by_principal_name`, `post_blocks_message`) were additionally activation-verified in a scratch recipe. The trigger itself was intentionally not activation-tested to avoid registering a live, Teams-visible bot command as a side effect — its shape is instead backed by two identical real production recipes.
 - [`templates/bot-command-buttons-reply.json`](templates/bot-command-buttons-reply.json) — A richer `bot_command` example: a `date_time`/`date` parameter alongside a `string` one, a lookup, and a reply with a markdown `text_block`, two `text_with_button_block`s (one static-params, one formula-built dynamic-params) each chaining into a different follow-up command, and a trailing `text_type: "custom"` subtle footer block. Field values are genericized from real production recipes (see `lint-rules.json`'s `_notes` for the verification trail); structurally import-validated against a live Workato workspace. Not activation-tested, for the same reason as above.
+- [`templates/custom-help-message.json`](templates/custom-help-message.json) — A `help_event` trigger that looks up the user who asked for help and posts a custom reply. Fully activation-tested end-to-end by a human tester: started the recipe, sent `help` to a live bot in Teams, confirmed the reply, then stopped it. The strongest verification level of any template in this skill.
 
 ---
 

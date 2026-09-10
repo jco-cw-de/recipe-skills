@@ -23,6 +23,12 @@ The following checks are specific to the Workbot for Microsoft Teams (`teams_bot
 - [ ] A date parameter uses `"type": "date_time"` with `"control_type": "date"` (not `"type": "date"`) — and its `extended_output_schema` entry includes `"parse_output": "date_conversion"` / `"render_input": "date_conversion"`
 - [ ] `input.hide_from_help` is present as a string (`"true"` or `"false"`), matching production usage
 
+## `help_event` Trigger
+
+- [ ] `input` is empty (`{}`) — this trigger takes no input
+- [ ] Only one `help_event` recipe is intended to be active per bot at a time — flag to the user if this looks like it would create a second one
+- [ ] Caller context is read from `["context", "from", "aadObjectId"]`, same path as `bot_command` — do not assume a different structure without confirming first
+
 ## `get_user_by_principal_name` Action
 
 - [ ] Input uses exactly one of `principal_name` (email/UPN) or `id` (Azure AD object ID) — do not include both

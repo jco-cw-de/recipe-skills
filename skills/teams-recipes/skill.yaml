@@ -3,12 +3,13 @@
 # Workato's Workbot for Microsoft Teams connector (teams_bot).
 
 name: teams-recipes
-version: 1.1.0
+version: 1.2.0
 description: >
   Microsoft Teams Workbot integration recipes for Workato. This skill enables
   AI agents to generate valid Workato recipe JSON for receiving Teams bot
-  commands, looking up Teams users, and posting adaptive-card-style block
-  messages back to a channel or user via the `teams_bot` connector.
+  commands, responding to help requests, looking up Teams users, and posting
+  adaptive-card-style block messages back to a channel or user via the
+  `teams_bot` connector.
 
 author: Your Name
 license: MIT
@@ -17,6 +18,7 @@ extends: workato-recipes
 
 capabilities:
   - Receive a Teams Workbot slash-style command with typed parameters, including string and date parameters
+  - Respond to a user's "help" message with a fully custom reply
   - Look up a Teams user by principal name (email/UPN) or Azure AD object ID
   - Post a block-based message (text and text-with-button blocks) to a user or channel, addressed by datapill or static ID
   - Reply with buttons that chain into other bot commands, with both static and formula-computed parameters
@@ -27,6 +29,7 @@ entry_point: SKILL.md
 templates:
   - templates/bot-command-notify.json
   - templates/bot-command-buttons-reply.json
+  - templates/custom-help-message.json
 
 patterns:
   - patterns/shared-teams-id-resolver.md
@@ -54,18 +57,22 @@ gaps:
   - pattern: Additional native actions/triggers
     status: unverified
     description: >
-      Only bot_command (trigger), get_user_by_principal_name, and
+      bot_command, help_event (triggers), get_user_by_principal_name, and
       post_blocks_message (actions) have been confirmed against a live
-      connector. Workato's own Workbot for Microsoft Teams documentation
-      additionally describes a New help message trigger, a Tab opened
+      connector -- help_event by a full activation test (see
+      lint-rules.json's _notes.verification_status). Workato's own Workbot
+      for Microsoft Teams documentation additionally describes a Tab opened
       trigger, a New message trigger (beta), a Delete message action, and a
       Show tab using Adaptive Cards action, plus a generic custom action for
       Microsoft Graph API calls -- none of these appear in any recipe in the
-      workspace this skill was verified against, so none are included here.
-      wk recipes import does not validate action/trigger names against the
-      live connector (confirmed: a fabricated name imports without error),
-      so only production usage or activation-testing (wk recipes start)
-      counts as verification -- and activation-testing an unverified
-      trigger/action on this connection risks a live side effect on a real
-      Teams tenant (e.g. the New help message trigger is a bot-wide
-      singleton). See lint-rules.json's _notes.workbotguide_gap.
+      workspace this skill was verified against, and none have been
+      activation-tested yet, so none are included here. wk recipes import
+      does not validate action/trigger names against the live connector
+      (confirmed: a fabricated name imports without error), so only
+      production usage or activation-testing counts as verification -- as
+      demonstrated by help_event, the doc's UI label does not reliably
+      predict the internal name (e.g. "New help message trigger" is
+      internally `help_event`, not a snake_case of the label), so none of
+      these remaining names should be assumed correct without the same
+      editor-driven correction + activation test. See
+      lint-rules.json's _notes.workbotguide_gap.
