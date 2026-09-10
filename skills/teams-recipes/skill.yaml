@@ -3,13 +3,13 @@
 # Workato's Workbot for Microsoft Teams connector (teams_bot).
 
 name: teams-recipes
-version: 1.3.0
+version: 1.4.0
 description: >
   Microsoft Teams Workbot integration recipes for Workato. This skill enables
   AI agents to generate valid Workato recipe JSON for receiving Teams bot
-  commands, responding to help requests, looking up Teams users, and posting
-  adaptive-card-style block messages back to a channel or user via the
-  `teams_bot` connector.
+  commands, responding to help requests, looking up Teams users, posting or
+  replying with adaptive-card-style block messages, and deleting messages,
+  via the `teams_bot` connector.
 
 author: Your Name
 license: MIT
@@ -21,8 +21,10 @@ capabilities:
   - Respond to a user's "help" message with a fully custom reply
   - Respond to a message that doesn't match any registered command (new_message_event)
   - Look up a Teams user by principal name (email/UPN) or Azure AD object ID
-  - Post a block-based message (text and text-with-button blocks) to a user or channel, addressed by datapill or static ID
+  - Post a block-based message (text and text-with-button blocks) to a specific user or channel, addressed by datapill or static ID
+  - Reply with a block-based message implicitly to whoever invoked the current command, with no recipient field needed
   - Reply with buttons that chain into other bot commands, with both static and formula-computed parameters
+  - Delete a previously posted message (conversation ID sourcing still unconfirmed)
   - Resolve a Teams user ID from an external-system identifier via a shared callable recipe
 
 entry_point: SKILL.md
@@ -60,20 +62,24 @@ gaps:
     status: partially_verified
     description: >
       bot_command, help_event, new_message_event, new_event (triggers),
-      get_user_by_principal_name, and post_blocks_message (actions) have
-      been confirmed against a live connector -- help_event by a full
-      activation test, new_message_event/new_event via the connector's own
-      trigger picker (see lint-rules.json's _notes.verification_status). The
-      connector's action picker additionally confirms Delete message, Post
-      message, Post message (old version), Post reply, Post reply (old
-      version), Post simple message, Post simple reply, Response to
+      get_user_by_principal_name, post_blocks_message,
+      post_blocks_reply_message, and delete_message (actions) have all been
+      confirmed against a live connector -- help_event by a full activation
+      test, new_message_event/new_event/post_blocks_reply_message via the
+      connector's own trigger/action picker, delete_message via an actual
+      job run that reached the live Teams API (see lint-rules.json's
+      _notes.verification_status). post_blocks_message is now confirmed to
+      correspond specifically to the picker's "Post message" label (has a
+      channel field); post_blocks_reply_message to "Post reply" (no channel
+      field, implicitly replies to the invoking context) -- these are
+      distinct actions, not the same one under two UI names. delete_message's
+      `conversation_id` input source is still unconfirmed (a Teams user ID,
+      the first thing tried, is confirmed WRONG). The connector's action
+      picker additionally confirms Post message (old version), Post reply
+      (old version), Post simple message, Post simple reply, Response to
       real-time event, and Custom action all exist as real, selectable
-      actions -- but none of their internal `name` fields have been
-      captured yet (requires selecting each in the editor and saving, same
-      method used for the triggers). post_blocks_message is presumed (not
-      confirmed) to correspond to the picker's "Post message" label; "Post
-      reply" is very likely a distinct, still-unknown action. See
-      lint-rules.json's _notes.workbotguide_gap.
+      actions -- but none of their internal `name` fields have been captured
+      yet. See lint-rules.json's _notes.workbotguide_gap.
   - pattern: Tab opened trigger / Show tab using Adaptive Cards action
     status: checked_not_available
     description: >

@@ -44,7 +44,19 @@ The following checks are specific to the Workbot for Microsoft Teams (`teams_bot
 
 ## `post_blocks_message` Action
 
+- [ ] `channel` is set — this action always targets a specific channel/user, unlike `post_blocks_reply_message`
 - [ ] `blocks` is an array where each entry has a `block_type` (`text_block` or `text_with_button_block`) and a matching nested object with that same key
 - [ ] `text_block` entries use `"text_type": "body_text"` for standard message text, or `"text_type": "custom"` (with `"separator": "true"` and `"style": {"isSubtle": "true"}`) for a de-emphasized footer line — not a made-up `text_type` value
 - [ ] `text_with_button_block` entries include `bot_command` (the command this button should invoke), `button_type` (observed value: `"submit"`), `open_task_module` (string `"true"`/`"false"`), and `params` (a JSON string of the parameters that command's `bot_command` trigger expects)
 - [ ] When a `text_with_button_block`'s `params` value must be computed (not a straight datapill passthrough), the field is built in full formula mode (leading `=`), not as a template string with an embedded formula expression
+
+## `post_blocks_reply_message` Action
+
+- [ ] Do NOT set a `channel` field — this action has none; it replies to the invoking context implicitly
+- [ ] Only used from a recipe with a real Workbot-command invocation context (`bot_command` or `help_event`), never from a recipe with no live Teams invocation (e.g. a clock-triggered recipe)
+- [ ] Not `post_blocks_message` — verify the recipe actually needs "reply where invoked" semantics, not "post to a specific channel/user"
+
+## `delete_message` Action
+
+- [ ] `message_id` is sourced from a `post_blocks_message`/`post_blocks_reply_message` step's `id` output
+- [ ] `conversation_id` is NOT sourced from `get_user_by_principal_name`'s `id` output (confirmed wrong via a live job failure — a Teams user ID is not a conversation ID) — flag to the user that the correct source for this field is still unconfirmed

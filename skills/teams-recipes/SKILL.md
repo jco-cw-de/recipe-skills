@@ -4,7 +4,7 @@ description: Microsoft Teams Workbot (teams_bot) recipes for Workato. Enables AI
 license: MIT
 metadata:
   author: Your Name
-  version: "1.3.0"
+  version: "1.4.0"
 ---
 
 # Teams Recipes Skill
@@ -71,7 +71,7 @@ Use this skill when a recipe needs to expose a command that Teams users invoke f
 
 ## Native Connector Guidance
 
-The Teams connector provides 2 verified native actions and 4 verified triggers. See `lint-rules.json` for the authoritative list.
+The Teams connector provides 4 verified native actions and 4 verified triggers. See `lint-rules.json` for the authoritative list.
 
 **A naming-convention warning:** Workato's internal trigger/action `name` does not reliably follow the doc's UI label. Confirmed twice: the docs' "New help message trigger" is internally `help_event`, not `new_help_message`; the docs' "New message trigger" is internally `new_message_event`, not `new_message`. Never assume a doc label maps predictably to an internal name — verify against the actual connector (the recipe editor's connector/action picker, or real recipe usage) every time.
 
@@ -88,7 +88,9 @@ The Teams connector provides 2 verified native actions and 4 verified triggers. 
 ### Choosing the Right Action
 
 - **`get_user_by_principal_name`** — Looks up a Teams user. Despite the name, this action has been observed in live recipes with **two different input fields**: `principal_name` (an email/UPN string) in one recipe, and `id` (an Azure AD object ID — typically taken straight from a `bot_command` trigger's `context.from.aadObjectId`) in three others. Use `id` when you already have the caller's AAD object ID from a `bot_command` trigger context; use `principal_name` when you only have an email address (e.g. sourced from another system, as in the [shared Teams ID resolver pattern](patterns/shared-teams-id-resolver.md)). Do not set both fields on the same action.
-- **`post_blocks_message`** — Posts a message built from one or more `blocks` to a channel or user. Use this any time a bot command needs to reply. `channel` accepts either a datapill (from `get_user_by_principal_name`'s `id` output, or from a `call_recipe`'d resolver — see [Common Patterns](#common-patterns)) or a static, hardcoded Teams user ID string — both are confirmed in production recipes. See [Block Types Reference](#block-types-reference) for what each block type supports.
+- **`post_blocks_message`** — Posts a message built from one or more `blocks` **to a specific channel or user** (this is the UI's "Post message" action — confirmed by direct picker selection, its auto-generated description matches exactly). Requires `channel`, which accepts either a datapill (from `get_user_by_principal_name`'s `id` output, or from a `call_recipe`'d resolver — see [Common Patterns](#common-patterns)) or a static, hardcoded Teams user ID string — both are confirmed in production recipes. Use this when posting somewhere other than where a command was invoked, or from a recipe that isn't itself a `bot_command`/`help_event` (e.g. a scheduled notification). Its output is a single field, `id` (the new message's ID) — confirmed via a live job run. See [Block Types Reference](#block-types-reference) for what each block type supports.
+- **`post_blocks_reply_message`** — The UI's "Post reply" action — a **distinct action from `post_blocks_message`**, confirmed by direct picker selection (auto-generated description: "Post reply to user as Workbot"). Unlike `post_blocks_message`, it has **no `channel`/recipient field** — it implicitly replies to wherever the invoking command came from. Per Workato's own docs, "Post reply must always be paired with a Workbot command" — use it only from a `bot_command` or `help_event` recipe, not a recipe with no live Teams invocation context. Its `blocks` field is presumed (not yet confirmed) to accept the same block types as `post_blocks_message`.
+- **`delete_message`** — Deletes a previously posted message. Confirmed real via a live job run (see `lint-rules.json`'s `_notes.delete_message`): the action reached the live Teams API and returned a real upstream data error, not a Workato "unknown action" error. Takes `conversation_id` and `message_id`. `message_id` should come from a `post_blocks_message`/`post_blocks_reply_message`'s `id` output. **`conversation_id` is NOT the same as a Teams user ID** — do not source it from `get_user_by_principal_name`'s `id` output (confirmed wrong via a live job failure); it needs to come from genuine conversation context, e.g. a `bot_command`/`help_event`/`new_message_event` trigger's own output, not yet confirmed exactly where.
 
 ---
 
@@ -97,8 +99,10 @@ The Teams connector provides 2 verified native actions and 4 verified triggers. 
 Native action/trigger datapills do NOT use a `["body"]` wrapper. Notable paths:
 
 - Trigger declared parameters: `["parameters", "<param_name>"]`
-- Trigger caller context: `["context", "from", "aadObjectId"]`
+- Trigger caller context (`bot_command`, `help_event`): `["context", "from", "aadObjectId"]`
+- Trigger caller context (`new_event`): `["from", "aadObjectId"]` — **top-level, not nested under `context`.** Confirmed different from `bot_command`/`help_event`'s shape; see [patterns/real-time-events.md](patterns/real-time-events.md).
 - `get_user_by_principal_name` output: `["id"]` (the Teams user ID — feed this into `post_blocks_message`'s `channel` field to message that user directly)
+- `post_blocks_message` output: `["id"]` (the posted message's ID — confirmed via a live job run; feed this into `delete_message`'s `message_id` field, or a follow-up post's "message to update" field)
 
 ---
 
