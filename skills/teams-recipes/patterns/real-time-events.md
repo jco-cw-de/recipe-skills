@@ -85,8 +85,39 @@ Confirmed live in the recipe editor (not activation-fired, but the editor resolv
 
 ## The paired `invoke_response` action
 
-The picker's **"Response to real-time event"** action — internal name **`invoke_response`** — is presumably how a recipe returns results back to Teams for a `new_event` firing (e.g. the Typeahead search's result list). Confirmed real via direct picker selection, added as a step under a `new_event` (Typeahead search) trigger recipe. Its input was captured empty — no response-payload shape (e.g. how search results should be structured) has been configured or tested yet. A natural next step, not yet done: configure and activation-test a full `new_event` (Typeahead search) → `invoke_response` round trip against a live Adaptive Card with a dynamic `Input.ChoiceSet`.
+The picker's **"Response to real-time event"** action — internal name **`invoke_response`** — is how a recipe returns results back to Teams for a `new_event` firing. It's polymorphic the same way `new_event` is: an `event_name` input selects which event you're responding to (currently only `application/search` confirmed available, same constraint as the trigger), and a same-named nested object holds the event-specific response fields. Both its `extended_input_schema` and `extended_output_schema` were materialized live by the connector (not guessed):
+
+```json
+{
+  "provider": "teams_bot",
+  "name": "invoke_response",
+  "keyword": "action",
+  "dynamicPickListSelection": {
+    "event_name": "Typeahead search (application/search)"
+  },
+  "input": {
+    "event_name": "application/search",
+    "application/search": {
+      "type": "application/vnd.microsoft.search.searchResponse",
+      "value": {
+        "results": [
+          { "title": "...", "value": "..." }
+        ]
+      }
+    }
+  }
+}
+```
+
+- `application/search.type` is fixed/read-only — the connector's own schema marks it `default: "application/vnd.microsoft.search.searchResponse"` with `ngIf: false` (not user-editable). Always this exact string.
+- `application/search.value.results` is an array of `{title, value}` objects — in practice populated via a dynamic list datapill from a search/lookup action earlier in the recipe (the doc's "Using dynamic lists in action fields" pattern), not typed in literally.
+
+This exactly matches Microsoft Bot Framework's public dynamic-search invoke-response format — useful confirmation that Workato's connector is a thin, faithful wrapper here, but this shape was pulled from the live connector's own schema, not assumed from that external knowledge.
+
+## What's still missing for a full round trip
+
+The schema on both ends (`new_event`'s `value.queryText` in, `invoke_response`'s `value.results` out) is now confirmed. What hasn't been built or tested: an actual Adaptive Card with a dynamic `Input.ChoiceSet` posted somewhere in Teams, a real user typing into it, and this action returning real results that show up in the UI. That requires figuring out how to post a card with a dynamic search field in the first place — `post_blocks_message`'s `blocks` array has no known block type for this; it likely requires the raw-JSON mode on `post_bot_message`/`post_bot_reply` (`use_json: true`, unexplored — see `lint-rules.json`'s `_notes.post_bot_message`) to send an arbitrary Adaptive Card body.
 
 ## Verification status
 
-`new_event` and `invoke_response` as names, and the exact output schema above for the `application/search` event specifically, were all confirmed live via the recipe editor's connector picker. The *absence* of tab/task-related events was confirmed by live search returning no matches for six plausible terms. Neither `invoke_response`'s response-payload shape, nor a full end-to-end typeahead-search recipe, has been built or activation-tested yet.
+`new_event`, `invoke_response`, and their full schemas for the `application/search` event specifically, are all confirmed live via the recipe editor's connector picker (including materialized `extended_input_schema`/`extended_output_schema`, not just accepted field names). The *absence* of tab/task-related events was confirmed by live search returning no matches for six plausible terms. A full end-to-end typeahead-search recipe (a real card, a real typed query, a real returned result) has not been built or activation-tested yet.

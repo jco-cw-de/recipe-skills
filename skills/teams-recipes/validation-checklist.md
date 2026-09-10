@@ -32,7 +32,8 @@ The following checks are specific to the Workbot for Microsoft Teams (`teams_bot
 
 ## `new_message_event` Trigger
 
-- [ ] Output field paths used (e.g. `message_text`, `conversation_id`) are flagged to the user as unconfirmed guesses, not asserted as verified — no live schema has been captured for this trigger yet
+- [ ] Output field paths use the confirmed real camelCase names (`messageText`, `conversationId`, `sentFromId`, etc. — see SKILL.md's Teams Datapill Paths) — NOT snake_case guesses modeled on the doc's field labels
+- [ ] `attachments` is treated as an array; per-item fields are `contentType`/`contentUrl`/`name` directly, with `downloadUrl`/`uniqueId`/`fileType` nested one level deeper under `content` — do not flatten these
 
 ## `new_event` Trigger
 
@@ -76,4 +77,8 @@ The following checks are specific to the Workbot for Microsoft Teams (`teams_bot
 
 ## `invoke_response` Action
 
-- [ ] Only used to respond to a `new_event` firing in the same recipe — flag to the user that its response-payload shape is unconfirmed (captured with an empty input only)
+- [ ] Only used to respond to a `new_event` firing in the same recipe
+- [ ] `input.event_name` matches the same confirmed-available value used on the paired `new_event` trigger (currently only `application/search`)
+- [ ] For `application/search`: the nested `"application/search"` object's `type` field is always the literal string `application/vnd.microsoft.search.searchResponse` (fixed/read-only in the connector's own schema) — never a different or computed value
+- [ ] `value.results` is an array of `{title, value}` objects — typically sourced from a dynamic list datapill, not typed as literal values
+- [ ] Flag to the user that the full live round trip (a real Adaptive Card with a dynamic search field, a real typed query, real results appearing in Teams) has not been activation-tested — only the schema is confirmed
