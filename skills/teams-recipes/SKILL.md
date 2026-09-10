@@ -4,7 +4,7 @@ description: Microsoft Teams Workbot (teams_bot) recipes for Workato. Enables AI
 license: MIT
 metadata:
   author: Your Name
-  version: "1.8.0"
+  version: "1.9.0"
 ---
 
 # Teams Recipes Skill
@@ -237,7 +237,7 @@ The working shape instead uses an `action_continue_flow` button on the message i
 3. `post_blocks_message` posts the message with a `text_with_button_block` (`button_type: "action_continue_flow"`, e.g. `button_title: "Dismiss"`) and a `timeout` (minutes) — the job suspends here
 4. On click (or timeout), the job resumes; `delete_message` deletes the same message, using this step's own earlier `id` output for `message_id`, and the *trigger's* `context.conversation.id` for `conversation_id`
 
-**Verification levels differ within this pattern, be precise about which:** `delete_message` with `conversation_id` from `context.conversation.id` was fully activation-tested end-to-end (message posted, then deleted) in an earlier version of this exact recipe that deleted immediately after posting, with no button involved. The `action_continue_flow` button itself (`button_type`, its fields, and the new `conversation_id`/`user_selection` outputs it unlocks) was confirmed live via direct field selection + save in the editor, but the full click-then-delete cycle — actually clicking "Dismiss" and confirming `delete_message` fires correctly afterward — has not yet been activation-tested. Treat the button mechanics as schema-confirmed, and the delete step as proven only in the no-button case, until someone closes that last loop.
+**Fully activation-tested end-to-end**, including the click: a human tester started the recipe, sent `hossa` in Teams, saw the message with its "Dismiss" button, clicked it, and confirmed the message was deleted. This is the strongest verification level of any multi-step pattern in this skill — every piece (`bot_command`, the lookup, `post_blocks_message` with an `action_continue_flow` button, and `delete_message` with `context.conversation.id`) proven together in one real, observed run.
 
 ### Notifying Someone Who Isn't the Caller
 
@@ -256,7 +256,7 @@ See [validation-checklist.md](validation-checklist.md) for the full checklist. A
 - [`templates/bot-command-notify.json`](templates/bot-command-notify.json) — A `bot_command` trigger that looks up the calling user and posts a text-block reply. Structurally validated by import against a live Workato workspace; the two actions it uses (`get_user_by_principal_name`, `post_blocks_message`) were additionally activation-verified in a scratch recipe. The trigger itself was intentionally not activation-tested to avoid registering a live, Teams-visible bot command as a side effect — its shape is instead backed by two identical real production recipes.
 - [`templates/bot-command-buttons-reply.json`](templates/bot-command-buttons-reply.json) — A richer `bot_command` example: a `date_time`/`date` parameter alongside a `string` one, a lookup, and a reply with a markdown `text_block`, two `text_with_button_block`s (one static-params, one formula-built dynamic-params) each chaining into a different follow-up command, and a trailing `text_type: "custom"` subtle footer block. Field values are genericized from real production recipes (see `lint-rules.json`'s `_notes` for the verification trail); structurally import-validated against a live Workato workspace. Not activation-tested, for the same reason as above.
 - [`templates/custom-help-message.json`](templates/custom-help-message.json) — A `help_event` trigger that looks up the user who asked for help and posts a custom reply. Fully activation-tested end-to-end by a human tester: started the recipe, sent `help` to a live bot in Teams, confirmed the reply, then stopped it. The strongest verification level of any template in this skill.
-- [`templates/self-deleting-message.json`](templates/self-deleting-message.json) — A `bot_command` that posts a message with a "Dismiss" `action_continue_flow` button and a 22-minute timeout, then deletes it via `delete_message` once clicked (or once the timeout elapses). Mixed verification: `delete_message` + `context.conversation.id` were activation-tested end-to-end in an earlier no-button version of this exact recipe; the `action_continue_flow` button's fields and outputs were schema-confirmed live, but the full click-then-delete cycle hasn't been activation-tested yet. See [Auto-Expiring / Self-Deleting Message](#common-patterns) for the full breakdown of what's proven vs. what isn't.
+- [`templates/self-deleting-message.json`](templates/self-deleting-message.json) — A `bot_command` that posts a message with a "Dismiss" `action_continue_flow` button and a 22-minute timeout, then deletes it via `delete_message` once clicked (or once the timeout elapses). Fully activation-tested end-to-end, click included — see [Auto-Expiring / Self-Deleting Message](#common-patterns).
 
 ---
 
