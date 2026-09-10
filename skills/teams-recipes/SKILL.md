@@ -4,7 +4,7 @@ description: Microsoft Teams Workbot (teams_bot) recipes for Workato. Enables AI
 license: MIT
 metadata:
   author: Your Name
-  version: "1.5.0"
+  version: "1.6.0"
 ---
 
 # Teams Recipes Skill
@@ -71,7 +71,7 @@ Use this skill when a recipe needs to expose a command that Teams users invoke f
 
 ## Native Connector Guidance
 
-The Teams connector provides 4 verified native actions and 4 verified triggers. See `lint-rules.json` for the authoritative list.
+The Teams connector provides 8 verified native actions and 4 verified triggers. See `lint-rules.json` for the authoritative list.
 
 **A naming-convention warning:** Workato's internal trigger/action `name` does not reliably follow the doc's UI label. Confirmed twice: the docs' "New help message trigger" is internally `help_event`, not `new_help_message`; the docs' "New message trigger" is internally `new_message_event`, not `new_message`. Never assume a doc label maps predictably to an internal name — verify against the actual connector (the recipe editor's connector/action picker, or real recipe usage) every time.
 
@@ -91,6 +91,8 @@ The Teams connector provides 4 verified native actions and 4 verified triggers. 
 - **`post_blocks_message`** — Posts a message built from one or more `blocks` **to a specific channel or user** (this is the UI's "Post message" action — confirmed by direct picker selection, its auto-generated description matches exactly). Requires `channel`, which accepts either a datapill (from `get_user_by_principal_name`'s `id` output, or from a `call_recipe`'d resolver — see [Common Patterns](#common-patterns)) or a static, hardcoded Teams user ID string — both are confirmed in production recipes. Use this when posting somewhere other than where a command was invoked, or from a recipe that isn't itself a `bot_command`/`help_event` (e.g. a scheduled notification). Its output is a single field, `id` (the new message's ID) — confirmed via a live job run. See [Block Types Reference](#block-types-reference) for what each block type supports.
 - **`post_blocks_reply_message`** — The UI's "Post reply" action — a **distinct action from `post_blocks_message`**, confirmed by direct picker selection (auto-generated description: "Post reply to user as Workbot"). Unlike `post_blocks_message`, it has **no `channel`/recipient field** — it implicitly replies to wherever the invoking command came from. Per Workato's own docs, "Post reply must always be paired with a Workbot command" — use it only from a `bot_command` or `help_event` recipe, not a recipe with no live Teams invocation context. Its `blocks` field is presumed (not yet confirmed) to accept the same block types as `post_blocks_message`.
 - **`delete_message`** — Deletes a previously posted message. Confirmed real via a live job run (see `lint-rules.json`'s `_notes.delete_message`): the action reached the live Teams API and returned a real upstream data error, not a Workato "unknown action" error. Takes `conversation_id` and `message_id`. `message_id` should come from a `post_blocks_message`/`post_blocks_reply_message`'s `id` output. **`conversation_id` is NOT the same as a Teams user ID** — do not source it from `get_user_by_principal_name`'s `id` output (confirmed wrong via a live job failure); it needs to come from genuine conversation context, e.g. a `bot_command`/`help_event`/`new_message_event` trigger's own output, not yet confirmed exactly where.
+- **`post_simple_message` / `post_simple_reply`** — Reduced-feature siblings of `post_blocks_message`/`post_blocks_reply_message`: plain Markdown text, no rich blocks or buttons. Same recipient rules as their `_blocks_` counterparts (`post_simple_message` needs a recipient; `post_simple_reply`, like `post_blocks_reply_message`, does not). Confirmed via direct picker selection; use these only when a recipe genuinely doesn't need blocks/buttons — otherwise prefer the `_blocks_` actions, which are far better documented in this skill.
+- **`post_bot_message` / `post_bot_reply`** — The doc's "Post message (old version)" / "Post reply (old version)." Confirmed via direct picker selection; both carry a `use_json` field not present on the newer actions, which is very likely where the doc's "Post as raw JSON" (fully custom Adaptive Card JSON) feature actually lives — not on `post_blocks_message`/`post_blocks_reply_message`. Presumed deprecated; prefer `post_blocks_message`/`post_blocks_reply_message` for new recipes unless raw JSON control is specifically needed and confirmed to only exist here.
 - **Anything else (the picker's "Custom action")** — this is NOT a connector-specific action. Confirmed via direct picker selection: it resolves to the standard `__adhoc_http_action`, exactly like every other connector skill in this repo. Use the base `workato-recipes` skill's adhoc HTTP patterns, not connector-specific guidance, when a recipe needs a Microsoft Graph API call this connector's native actions don't cover.
 
 ---
